@@ -1,34 +1,31 @@
-name: Build with Gradle
+name: Build & Release with Gradle
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    tags:
+      - 'v*'
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the code
+      # Checkout
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up JDK 21 using Temurin
+      # Java setup
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
-          distribution: 'temurin'  # Corrected distribution name
+          distribution: 'temurin'
 
-      # Ensure gradlew is executable
+      # Make gradlew executable
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # Cache Gradle dependencies
+      # Cache
       - name: Cache Gradle dependencies
         uses: actions/cache@v3
         with:
@@ -37,6 +34,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # Build with Gradle
+      # Build
       - name: Build with Gradle
         run: ./gradlew build
+
+      # Create GitHub Release
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/libs/*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
