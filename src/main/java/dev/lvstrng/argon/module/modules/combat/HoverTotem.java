@@ -49,7 +49,7 @@ public final class HoverTotem extends Module implements TickListener {
 			Slot hoveredSlot = ((HandledScreenMixin) inv).getFocusedSlot();
 
 			if (autoSwitch.getValue())
-				mc.player.getInventory().selectedSlot = slot.getValueInt() - 1;
+				mc.player.getInventory().setSelectedSlot(slot.getValueInt() - 1);
 
 			if (hoveredSlot != null) {
 				int slot = hoveredSlot.getIndex();

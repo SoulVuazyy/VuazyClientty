@@ -10,10 +10,7 @@ import dev.lvstrng.argon.module.setting.ModeSetting;
 import dev.lvstrng.argon.module.setting.NumberSetting;
 import dev.lvstrng.argon.utils.*;
 import dev.lvstrng.argon.utils.rotation.Rotation;
-import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.AxeItem;
-import net.minecraft.item.SwordItem;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -119,7 +116,7 @@ public final class AimAssist extends Module implements HudListener, MouseMoveLis
 		if (mc.player == null || mc.currentScreen != null)
 			return;
 
-		if (onlyWeapon.getValue() && !(mc.player.getMainHandStack().getItem() instanceof SwordItem || mc.player.getMainHandStack().getItem() instanceof AxeItem))
+		if (onlyWeapon.getValue() && !WorldUtils.isWeapon(mc.player.getMainHandStack()))
 			return;
 
 		if (onLeftClick.getValue() && GLFW.glfwGetMouseButton(mc.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) != GLFW.GLFW_PRESS)
@@ -138,7 +135,7 @@ public final class AimAssist extends Module implements HudListener, MouseMoveLis
 			resetSpeed.reset();
 		}
 
-		Vec3d targetPos = posMode.isMode(PosMode.Normal) ? target.getPos() : target.getLerpedPos(RenderTickCounter.ONE.getTickDelta(true));
+		Vec3d targetPos = posMode.isMode(PosMode.Normal) ? target.getEntityPos() : target.getLerpedPos(RenderUtils.tickProgress());
 
 		if (aimAt.isMode(AimMode.Chest))
 			targetPos = targetPos.add(0, -0.5, 0);
@@ -174,8 +171,8 @@ public final class AimAssist extends Module implements HudListener, MouseMoveLis
 		}
 
 		if (lerp.isMode(LerpMode.EaseOut)) {
-			yaw = (float) easeOutBackDegrees(mc.player.getYaw(), rotation.yaw(), yawStrength * RenderTickCounter.ONE.getLastFrameDuration());
-			pitch = (float) easeOutBackDegrees(mc.player.getPitch(), rotation.pitch(), pitchStrength * RenderTickCounter.ONE.getLastFrameDuration());
+			yaw = (float) easeOutBackDegrees(mc.player.getYaw(), rotation.yaw(), yawStrength * RenderUtils.frameDelta());
+			pitch = (float) easeOutBackDegrees(mc.player.getPitch(), rotation.pitch(), pitchStrength * RenderUtils.frameDelta());
 		}
 
 		if (MathUtils.randomInt(1, 100) <= randomization.getValueInt()) {

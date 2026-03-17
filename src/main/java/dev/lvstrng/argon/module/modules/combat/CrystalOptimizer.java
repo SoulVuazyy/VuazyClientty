@@ -9,10 +9,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.EndCrystalEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ToolItem;
-import net.minecraft.item.ToolMaterial;
-import net.minecraft.item.ToolMaterials;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
@@ -66,7 +62,7 @@ public final class CrystalOptimizer extends Module implements PacketSendListener
 							if (!(weakness == null || strength != null && strength.getAmplifier() > weakness.getAmplifier() || WorldUtils.isTool(mc.player.getMainHandStack())))
 								return;
 
-							hit.getEntity().kill();
+							hit.getEntity().discard();
 							hit.getEntity().setRemoved(Entity.RemovalReason.KILLED);
 							hit.getEntity().onRemoved();
 						}

@@ -7,6 +7,7 @@ import dev.lvstrng.argon.module.Module;
 import dev.lvstrng.argon.module.modules.client.SelfDestruct;
 import net.minecraft.client.Keyboard;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.input.KeyInput;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,7 +23,7 @@ public class KeyboardMixin {
 	private MinecraftClient client;
 
 	@Inject(method = "onKey", at = @At("HEAD"))
-	private void onPress(long window, int key, int scancode, int action, int modifiers, CallbackInfo ci) {
-		EventManager.fire(new ButtonListener.ButtonEvent(key, window, action));
+	private void onPress(long window, int action, KeyInput input, CallbackInfo ci) {
+		EventManager.fire(new ButtonListener.ButtonEvent(input.key(), window, action));
 	}
 }

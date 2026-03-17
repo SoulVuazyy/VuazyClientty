@@ -8,9 +8,9 @@ import dev.lvstrng.argon.module.Module;
 import dev.lvstrng.argon.module.setting.BooleanSetting;
 import dev.lvstrng.argon.utils.BlockUtils;
 import dev.lvstrng.argon.utils.EncryptedString;
+import dev.lvstrng.argon.utils.WorldUtils;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.Items;
-import net.minecraft.item.SwordItem;
 import net.minecraft.util.hit.BlockHitResult;
 
 
@@ -79,7 +79,7 @@ public final class Prevent extends Module implements ItemUseListener, AttackList
 				event.cancel();
 
 			if (BlockUtils.isBlock(hit.getBlockPos(), Blocks.ENDER_CHEST) && echestClick.getValue() &&
-					(mc.player.getMainHandStack().getItem() instanceof SwordItem
+					(WorldUtils.isSword(mc.player.getMainHandStack())
 							|| mc.player.getMainHandStack().getItem() == Items.END_CRYSTAL
 							|| mc.player.getMainHandStack().getItem() == Items.OBSIDIAN
 							|| mc.player.getMainHandStack().getItem() == Items.RESPAWN_ANCHOR

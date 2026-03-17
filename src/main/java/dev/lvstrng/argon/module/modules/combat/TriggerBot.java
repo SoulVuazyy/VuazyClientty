@@ -100,7 +100,8 @@ public final class TriggerBot extends Module implements TickListener, AttackList
 			if(Argon.INSTANCE.getModuleManager().getModule(Friends.class).antiAttack.getValue() && Argon.INSTANCE.getFriendManager().isAimingOverFriend())
 				return;
 
-			Item item = mc.player.getMainHandStack().getItem();
+			ItemStack mainHandStack = mc.player.getMainHandStack();
+			Item item = mainHandStack.getItem();
 
 			if (onLeftClick.getValue() && GLFW.glfwGetMouseButton(mc.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) != GLFW.GLFW_PRESS)
 				return;
@@ -112,7 +113,7 @@ public final class TriggerBot extends Module implements TickListener, AttackList
 				return;
 
 			if (!allItems.getValue()) {
-				if (item instanceof SwordItem) {
+				if (WorldUtils.isSword(mainHandStack)) {
 					if (mc.crosshairTarget instanceof EntityHitResult hit) {
 						Entity entity = hit.getEntity();
 
@@ -153,7 +154,7 @@ public final class TriggerBot extends Module implements TickListener, AttackList
 							}
 						}
 					}
-				} else if (item instanceof AxeItem) {
+				} else if (WorldUtils.isAxe(mainHandStack)) {
 					if (mc.crosshairTarget instanceof EntityHitResult hit) {
 						Entity entity = hit.getEntity();
 

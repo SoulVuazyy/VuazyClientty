@@ -1,20 +1,19 @@
 package dev.lvstrng.argon.font;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import dev.lvstrng.argon.utils.EncryptedString;
-import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.gui.DrawContext;
+import org.joml.Matrix3x2fStack;
 
 import java.awt.*;
 import java.util.Random;
-
-import static org.lwjgl.opengl.GL11.*;
 
 /**
  * @author superblaubeere27
  * @ported sprayD
  */
 public final class GlyphPageFontRenderer {
+
+	private static final char SECTION_SIGN = '\u00A7';
 
 	public Random fontRandom = new Random();
 
@@ -189,43 +188,43 @@ public final class GlyphPageFontRenderer {
 		return new GlyphPageFontRenderer(regularPage, boldPage, italicPage, boldItalicPage);
 	}
 
-	public int drawStringWithShadow(MatrixStack matrices, CharSequence text, float x, float y, int color) {
-		return drawString(matrices, text, x, y, color, true);
+	public int drawStringWithShadow(DrawContext context, CharSequence text, float x, float y, int color) {
+		return drawString(context, text, x, y, color, true);
 	}
 
-	public int drawStringWithShadow(MatrixStack matrices, CharSequence text, double x, double y, int color) {
-		return drawString(matrices, text, (float) x, (float) y, color, true);
+	public int drawStringWithShadow(DrawContext context, CharSequence text, double x, double y, int color) {
+		return drawString(context, text, (float) x, (float) y, color, true);
 	}
 
-	public int drawString(MatrixStack matrices, CharSequence text, float x, float y, int color) {
-		return drawString(matrices, text, x, y, color, false);
+	public int drawString(DrawContext context, CharSequence text, float x, float y, int color) {
+		return drawString(context, text, x, y, color, false);
 	}
 
-	public int drawString(MatrixStack matrices, CharSequence text, double x, double y, int color) {
-		return drawString(matrices, text, (float) x, (float) y, color, false);
+	public int drawString(DrawContext context, CharSequence text, double x, double y, int color) {
+		return drawString(context, text, (float) x, (float) y, color, false);
 	}
 
-	public int drawCenteredString(MatrixStack matrices, CharSequence text, double x, double y, float scale, int color) {
-		return drawString(matrices, text, (float) x - getStringWidth(text) / 2, (float) y, scale, color, false);
+	public int drawCenteredString(DrawContext context, CharSequence text, double x, double y, float scale, int color) {
+		return drawString(context, text, (float) x - getStringWidth(text) / 2, (float) y, scale, color, false);
 	}
 
-	public int drawCenteredString(MatrixStack matrices, CharSequence text, double x, double y, int color) {
-		return drawString(matrices, text, (float) x - getStringWidth(text) / 2, (float) y, color, false);
+	public int drawCenteredString(DrawContext context, CharSequence text, double x, double y, int color) {
+		return drawString(context, text, (float) x - getStringWidth(text) / 2, (float) y, color, false);
 	}
 
-	public int drawCenteredStringWidthShadow(MatrixStack matrices, CharSequence text, double x, double y, int color) {
-		return drawString(matrices, text, (float) x - getStringWidth(text) / 2, (float) y, color, true);
+	public int drawCenteredStringWidthShadow(DrawContext context, CharSequence text, double x, double y, int color) {
+		return drawString(context, text, (float) x - getStringWidth(text) / 2, (float) y, color, true);
 	}
 
-	public int drawString(MatrixStack matrices, CharSequence text, float x, float y, float scale, int color, boolean dropShadow) {
+	public int drawString(DrawContext context, CharSequence text, float x, float y, float scale, int color, boolean dropShadow) {
 		this.resetStyles();
 		int i;
 
 		if (dropShadow) {
-			i = this.renderString(matrices, text, x + 1.0F, y + 1.0F, scale, color, true);
-			i = Math.max(i, this.renderString(matrices, text, x, y, scale, color, false));
+			i = this.renderString(context, text, x + 1.0F, y + 1.0F, scale, color, true);
+			i = Math.max(i, this.renderString(context, text, x, y, scale, color, false));
 		} else {
-			i = this.renderString(matrices, text, x, y, scale, color, false);
+			i = this.renderString(context, text, x, y, scale, color, false);
 		}
 
 		return i;
@@ -234,25 +233,25 @@ public final class GlyphPageFontRenderer {
 	/**
 	 * Draws the specified string.
 	 */
-	public int drawString(MatrixStack matrices, CharSequence text, float x, float y, int color, boolean dropShadow) {
+	public int drawString(DrawContext context, CharSequence text, float x, float y, int color, boolean dropShadow) {
 		this.resetStyles();
 		int i;
 
 		if (dropShadow) {
-			i = this.renderString(matrices, text, x + 1.0F, y + 1.0F, color, true);
-			i = Math.max(i, this.renderString(matrices, text, x, y, color, false));
+			i = this.renderString(context, text, x + 1.0F, y + 1.0F, color, true);
+			i = Math.max(i, this.renderString(context, text, x, y, color, false));
 		} else {
-			i = this.renderString(matrices, text, x, y, color, false);
+			i = this.renderString(context, text, x, y, color, false);
 		}
 
 		return i;
 	}
 
 	/**
-	 * Render single line string by setting GL color, current (posX,posY), and
+	 * Render single line string by setting color, current (posX,posY), and
 	 * calling renderStringAtPos()
 	 */
-	private int renderString(MatrixStack matrices, CharSequence text, float x, float y, int color, boolean dropShadow) {
+	private int renderString(DrawContext context, CharSequence text, float x, float y, int color, boolean dropShadow) {
 		if (text == null) {
 			return 0;
 		} else {
@@ -266,12 +265,12 @@ public final class GlyphPageFontRenderer {
 			}
 			this.posX = x * 2.0f;
 			this.posY = y * 2.0f;
-			this.renderStringAtPos(matrices, text, dropShadow, color);
+			this.renderStringAtPos(context, text, dropShadow, color);
 			return (int) (this.posX / 4.0f);
 		}
 	}
 
-	private int renderString(MatrixStack matrices, CharSequence text, float x, float y, float scale, int color, boolean dropShadow) {
+	private int renderString(DrawContext context, CharSequence text, float x, float y, float scale, int color, boolean dropShadow) {
 		if (text == null) {
 			return 0;
 		} else {
@@ -285,7 +284,7 @@ public final class GlyphPageFontRenderer {
 			}
 			this.posX = x * 2.0f;
 			this.posY = y * 2.0f;
-			this.renderStringAtPos(matrices, text, scale, dropShadow, color);
+			this.renderStringAtPos(context, text, scale, dropShadow, color);
 			return (int) (this.posX / 4.0f);
 		}
 	}
@@ -293,28 +292,21 @@ public final class GlyphPageFontRenderer {
 	/**
 	 * Render a single line string at the current (posX,posY) and update posX
 	 */
-	private void renderStringAtPos(MatrixStack matrices, CharSequence text, boolean shadow, int color) {
+	private void renderStringAtPos(DrawContext context, CharSequence text, boolean shadow, int color) {
 		GlyphPage glyphPage = getCurrentGlyphPage();
 		float alpha = (float) (color >> 24 & 255) / 255.0F;
-		float g = (float) (color >> 16 & 255) / 255.0F;
-		float h = (float) (color >> 8 & 255) / 255.0F;
-		float k = (float) (color & 255) / 255.0F;
+		float red = (float) (color >> 16 & 255) / 255.0F;
+		float green = (float) (color >> 8 & 255) / 255.0F;
+		float blue = (float) (color & 255) / 255.0F;
 
-		matrices.push();
-
-		matrices.scale(0.5F, 0.5F, 0.5F);
-
-		GlStateManager._enableBlend();
-		GlStateManager._blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		glyphPage.bindTexture();
-
-		GlStateManager._texParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		Matrix3x2fStack matrices = context.getMatrices();
+		matrices.pushMatrix();
+		matrices.scale(0.5F, 0.5F);
 
 		for (int i = 0; i < text.length(); ++i) {
 			char c0 = text.charAt(i);
 
-			if (c0 == 167 && i + 1 < text.length()) {
+			if (c0 == SECTION_SIGN && i + 1 < text.length()) {
 				int i1 = "0123456789abcdefklmnor".indexOf(Character.toLowerCase(text.charAt(i + 1)));
 
 				if (i1 < 16) {
@@ -333,9 +325,9 @@ public final class GlyphPageFontRenderer {
 
 					int j1 = this.colorCode[i1];
 
-					g = (float) (j1 >> 16 & 255) / 255.0F;
-					h = (float) (j1 >> 8 & 255) / 255.0F;
-					k = (float) (j1 & 255) / 255.0F;
+					red = (float) (j1 >> 16 & 255) / 255.0F;
+					green = (float) (j1 >> 8 & 255) / 255.0F;
+					blue = (float) (j1 & 255) / 255.0F;
 				} else if (i1 == 16) {
 				} else if (i1 == 17) {
 					this.boldStyle = true;
@@ -356,41 +348,31 @@ public final class GlyphPageFontRenderer {
 			} else {
 				glyphPage = getCurrentGlyphPage();
 
-				glyphPage.bindTexture();
+				int currentColor = toArgb(red, green, blue, alpha);
+				float f = glyphPage.drawChar(context, c0, posX, posY, currentColor);
 
-				float f = glyphPage.drawChar(matrices, c0, posX, posY, g, k, h, alpha);
-
-				doDraw(f, glyphPage);
+				doDraw(context, f, glyphPage, currentColor);
 			}
 		}
 
-		glyphPage.unbindTexture();
-		matrices.pop();
-
+		matrices.popMatrix();
 	}
 
-	private void renderStringAtPos(MatrixStack matrices, CharSequence text, float scale, boolean shadow, int color) {
+	private void renderStringAtPos(DrawContext context, CharSequence text, float scale, boolean shadow, int color) {
 		GlyphPage glyphPage = getCurrentGlyphPage();
 		float alpha = (float) (color >> 24 & 255) / 255.0F;
-		float g = (float) (color >> 16 & 255) / 255.0F;
-		float h = (float) (color >> 8 & 255) / 255.0F;
-		float k = (float) (color & 255) / 255.0F;
+		float red = (float) (color >> 16 & 255) / 255.0F;
+		float green = (float) (color >> 8 & 255) / 255.0F;
+		float blue = (float) (color & 255) / 255.0F;
 
-		matrices.push();
-
-		matrices.scale(scale, scale, scale);
-
-		GlStateManager._enableBlend();
-		GlStateManager._blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		glyphPage.bindTexture();
-
-		GlStateManager._texParameter(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		Matrix3x2fStack matrices = context.getMatrices();
+		matrices.pushMatrix();
+		matrices.scale(scale, scale);
 
 		for (int i = 0; i < text.length(); ++i) {
 			char c0 = text.charAt(i);
 
-			if (c0 == 167 && i + 1 < text.length()) {
+			if (c0 == SECTION_SIGN && i + 1 < text.length()) {
 				int i1 = "0123456789abcdefklmnor".indexOf(Character.toLowerCase(text.charAt(i + 1)));
 
 				if (i1 < 16) {
@@ -409,9 +391,9 @@ public final class GlyphPageFontRenderer {
 
 					int j1 = this.colorCode[i1];
 
-					g = (float) (j1 >> 16 & 255) / 255.0F;
-					h = (float) (j1 >> 8 & 255) / 255.0F;
-					k = (float) (j1 & 255) / 255.0F;
+					red = (float) (j1 >> 16 & 255) / 255.0F;
+					green = (float) (j1 >> 8 & 255) / 255.0F;
+					blue = (float) (j1 & 255) / 255.0F;
 				} else if (i1 == 16) {
 				} else if (i1 == 17) {
 					this.boldStyle = true;
@@ -432,41 +414,41 @@ public final class GlyphPageFontRenderer {
 			} else {
 				glyphPage = getCurrentGlyphPage();
 
-				glyphPage.bindTexture();
+				int currentColor = toArgb(red, green, blue, alpha);
+				float f = glyphPage.drawChar(context, c0, posX, posY, currentColor);
 
-				float f = glyphPage.drawChar(matrices, c0, posX, posY, g, k, h, alpha);
-
-				doDraw(f, glyphPage);
+				doDraw(context, f, glyphPage, currentColor);
 			}
 		}
 
-		glyphPage.unbindTexture();
-		matrices.pop();
-
+		matrices.popMatrix();
 	}
 
-
-	private void doDraw(float f, GlyphPage glyphPage) {
+	private void doDraw(DrawContext context, float f, GlyphPage glyphPage, int color) {
 		if (this.strikethroughStyle) {
-			BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
-			bufferBuilder.vertex(this.posX, this.posY + (float) (glyphPage.getMaxFontHeight() / 2), 0.0F);
-			bufferBuilder.vertex(this.posX + f, this.posY + (float) (glyphPage.getMaxFontHeight() / 2), 0.0F);
-			bufferBuilder.vertex(this.posX + f, this.posY + (float) (glyphPage.getMaxFontHeight() / 2) - 1.0F, 0.0F);
-			bufferBuilder.vertex(this.posX, this.posY + (float) (glyphPage.getMaxFontHeight() / 2) - 1.0F, 0.0F);
-			BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
+			drawLine(context, this.posX, this.posX + f, this.posY + (glyphPage.getMaxFontHeight() / 2.0F), color);
 		}
 
 		if (this.underlineStyle) {
-			BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
-			int l = this.underlineStyle ? -1 : 0;
-			bufferBuilder.vertex(this.posX + (float) l, this.posY + (float) glyphPage.getMaxFontHeight(), 0.0F);
-			bufferBuilder.vertex(this.posX + f, this.posY + (float) glyphPage.getMaxFontHeight(), 0.0F);
-			bufferBuilder.vertex(this.posX + f, this.posY + (float) glyphPage.getMaxFontHeight() - 1.0F, 0.0F);
-			bufferBuilder.vertex(this.posX + (float) l, this.posY + (float) glyphPage.getMaxFontHeight() - 1.0F, 0.0F);
-			BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
+			drawLine(context, this.posX - 1.0F, this.posX + f, this.posY + glyphPage.getMaxFontHeight(), color);
 		}
 
 		this.posX += f;
+	}
+
+	private void drawLine(DrawContext context, float startX, float endX, float y, int color) {
+		int left = Math.round(Math.min(startX, endX));
+		int right = Math.max(left + 1, Math.round(Math.max(startX, endX)));
+		int top = Math.round(y - 1.0F);
+		context.fill(left, top, right, top + 1, color);
+	}
+
+	private int toArgb(float red, float green, float blue, float alpha) {
+		int packedAlpha = Math.max(0, Math.min(255, Math.round(alpha * 255.0F)));
+		int packedRed = Math.max(0, Math.min(255, Math.round(red * 255.0F)));
+		int packedGreen = Math.max(0, Math.min(255, Math.round(green * 255.0F)));
+		int packedBlue = Math.max(0, Math.min(255, Math.round(blue * 255.0F)));
+		return packedAlpha << 24 | packedRed << 16 | packedGreen << 8 | packedBlue;
 	}
 
 	private GlyphPage getCurrentGlyphPage() {
@@ -499,6 +481,7 @@ public final class GlyphPageFontRenderer {
 		if (text == null) {
 			return 0;
 		}
+		resetStyles();
 		int width = 0;
 
 		GlyphPage currentPage;
@@ -510,7 +493,7 @@ public final class GlyphPageFontRenderer {
 		for (int i = 0; i < size; i++) {
 			char character = text.charAt(i);
 
-			if (character == '�')
+			if (character == SECTION_SIGN)
 				on = true;
 			else if (on && character >= '0' && character <= 'r') {
 				int colorIndex = "0123456789abcdefklmnor".indexOf(character);
@@ -554,6 +537,7 @@ public final class GlyphPageFontRenderer {
 	 */
 	public CharSequence trimStringToWidth(CharSequence text, int maxWidth, boolean reverse) {
 		StringBuilder stringbuilder = new StringBuilder();
+		resetStyles();
 
 		boolean on = false;
 
@@ -566,7 +550,7 @@ public final class GlyphPageFontRenderer {
 		for (int i = j; i >= 0 && i < text.length() && i < maxWidth; i += k) {
 			char character = text.charAt(i);
 
-			if (character == '�')
+			if (character == SECTION_SIGN)
 				on = true;
 			else if (on && character >= '0' && character <= 'r') {
 				int colorIndex = "0123456789abcdefklmnor".indexOf(character);

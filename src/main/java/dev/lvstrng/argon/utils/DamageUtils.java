@@ -161,7 +161,7 @@ public class DamageUtils {
 		if (target == null) return 0f;
 		if (target instanceof PlayerEntity player && getGameMode(player) == GameMode.CREATIVE) return 0f;
 
-		Vec3d position = predictMovement ? target.getPos().add(target.getVelocity()) : target.getPos();
+		Vec3d position = predictMovement ? target.getEntityPos().add(target.getVelocity()) : target.getEntityPos();
 
 		Box box = target.getBoundingBox();
 		if (predictMovement) box = box.offset(target.getVelocity());
@@ -188,7 +188,7 @@ public class DamageUtils {
 	 * @see PlayerEntity#attack(Entity)
 	 */
 	public static float getAttackDamage(LivingEntity attacker, LivingEntity target) {
-		float itemDamage = (float) attacker.getAttributeValue(EntityAttributes.GENERIC_ATTACK_DAMAGE);
+		float itemDamage = (float) attacker.getAttributeValue(EntityAttributes.ATTACK_DAMAGE);
 		DamageSource damageSource = attacker instanceof PlayerEntity player ? mc.world.getDamageSources().playerAttack(player) : mc.world.getDamageSources().mobAttack(attacker);
 
 		// Get enchant damage
@@ -224,7 +224,7 @@ public class DamageUtils {
 		if (entity.getBlockY() >= surface) return fallDamageReductions(entity, surface);
 
 		// Under the surface
-		BlockHitResult raycastResult = mc.world.raycast(new RaycastContext(entity.getPos(), new Vec3d(entity.getX(), mc.world.getBottomY(), entity.getZ()), RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.WATER, entity));
+		BlockHitResult raycastResult = mc.world.raycast(new RaycastContext(entity.getEntityPos(), new Vec3d(entity.getX(), mc.world.getBottomY(), entity.getZ()), RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.WATER, entity));
 		if (raycastResult.getType() == HitResult.Type.MISS) return 0;
 
 		return fallDamageReductions(entity, raycastResult.getBlockPos().getY());
@@ -248,7 +248,7 @@ public class DamageUtils {
 		}
 
 		// Armor reduction
-		damage = DamageUtil.getDamageLeft(entity, damage, damageSource, getArmor(entity), (float) entity.getAttributeValue(EntityAttributes.GENERIC_ARMOR_TOUGHNESS));
+		damage = DamageUtil.getDamageLeft(entity, damage, damageSource, getArmor(entity), (float) entity.getAttributeValue(EntityAttributes.ARMOR_TOUGHNESS));
 
 		// Resistance reduction
 		damage = resistanceReduction(entity, damage);
@@ -260,7 +260,7 @@ public class DamageUtils {
 	}
 
 	private static float getArmor(LivingEntity entity) {
-		return (float) Math.floor(entity.getAttributeValue(EntityAttributes.GENERIC_ARMOR));
+		return (float) Math.floor(entity.getAttributeValue(EntityAttributes.ARMOR));
 	}
 
 

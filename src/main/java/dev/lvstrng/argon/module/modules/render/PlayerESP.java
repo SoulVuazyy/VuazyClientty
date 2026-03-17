@@ -1,6 +1,5 @@
 package dev.lvstrng.argon.module.modules.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.lvstrng.argon.event.events.GameRenderListener;
 import dev.lvstrng.argon.module.Category;
 import dev.lvstrng.argon.module.Module;
@@ -60,20 +59,21 @@ public final class PlayerESP extends Module implements GameRenderListener {
 		for (PlayerEntity player : mc.world.getPlayers()) {
 			if (mode.isMode(Mode.ThreeD)) {
 				if (player != mc.player) {
-					Camera cam = mc.getBlockEntityRenderDispatcher().camera;
+					Camera cam = mc.gameRenderer.getCamera();
 					if (cam != null) {
 						MatrixStack matrices = event.matrices;
 						matrices.push();
-						Vec3d vec = cam.getPos();
+						Vec3d vec = cam.getCameraPos();
 						
             					event.matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(cam.getPitch()));
             					event.matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(cam.getYaw() + 180F));
 						event.matrices.translate(-vec.x, -vec.y, -vec.z);
 					}
 
-					double xPos = MathHelper.lerp(RenderTickCounter.ONE.getTickDelta(true), player.prevX, player.getX());
-					double yPos = MathHelper.lerp(RenderTickCounter.ONE.getTickDelta(true), player.prevY, player.getY());
-					double zPos = MathHelper.lerp(RenderTickCounter.ONE.getTickDelta(true), player.prevZ, player.getZ());
+					Vec3d lerpedPos = player.getLerpedPos(RenderUtils.tickProgress());
+					double xPos = lerpedPos.x;
+					double yPos = lerpedPos.y;
+					double zPos = lerpedPos.z;
 
 					RenderUtils.renderFilledBox(
 							event.matrices,
@@ -86,20 +86,20 @@ public final class PlayerESP extends Module implements GameRenderListener {
 							Utils.getMainColor(alpha.getValueInt(), 1).brighter());
 
 					if (tracers.getValue())
-						RenderUtils.renderLine(event.matrices, Utils.getMainColor(255, 1), mc.crosshairTarget.getPos(), player.getLerpedPos(RenderTickCounter.ONE.getTickDelta(true)));
+						RenderUtils.renderLine(event.matrices, Utils.getMainColor(255, 1), mc.crosshairTarget.getPos(), player.getLerpedPos(RenderUtils.tickProgress()));
 
 					event.matrices.pop();
 				}
 			} else if (mode.isMode(Mode.TwoD)) {
 				if (player != mc.player) {
-					var cam = mc.getBlockEntityRenderDispatcher().camera;
+					var cam = mc.gameRenderer.getCamera();
 					event.matrices.push();
             				event.matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(cam.getPitch()));
             				event.matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(cam.getYaw() + 180F));
 					renderOutline(player, getColor(alpha.getValueInt()), event.matrices);
 
 					if (tracers.getValue())
-						RenderUtils.renderLine(event.matrices, Utils.getMainColor(255, 1), mc.crosshairTarget.getPos(), player.getLerpedPos(RenderTickCounter.ONE.getTickDelta(true)));
+						RenderUtils.renderLine(event.matrices, Utils.getMainColor(255, 1), mc.crosshairTarget.getPos(), player.getLerpedPos(RenderUtils.tickProgress()));
 
 					event.matrices.pop();
 				}
@@ -114,8 +114,8 @@ public final class PlayerESP extends Module implements GameRenderListener {
 		float alpha = color.brighter().getAlpha() / 255f;
 
 		Camera c = mc.gameRenderer.getCamera();
-		Vec3d camPos = c.getPos();
-		Vec3d start = e.getLerpedPos(RenderTickCounter.ONE.getTickDelta(true)).subtract(camPos);
+		Vec3d camPos = c.getCameraPos();
+		Vec3d start = e.getLerpedPos(RenderUtils.tickProgress()).subtract(camPos);
 		float x = (float) start.x;
 		float y = (float) start.y;
 		float z = (float) start.z;
@@ -127,35 +127,21 @@ public final class PlayerESP extends Module implements GameRenderListener {
 
 		Matrix4f matrix = stack.peek().getPositionMatrix();
 
-		RenderSystem.setShader(GameRenderer::getPositionColorProgram);
 		if (ClickGUI.antiAliasing.getValue()) {
 			GL11.glEnable(GL13.GL_MULTISAMPLE);
 			GL11.glEnable(GL11.GL_LINE_SMOOTH);
 			GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
 		}
 		GL11.glDepthFunc(GL11.GL_ALWAYS);
-		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-		RenderSystem.defaultBlendFunc();
-		RenderSystem.enableBlend();
+		float lineWidth = width.getValueInt();
+		RenderUtils.drawLayer(RenderLayers.lines(), buffer -> {
+			RenderUtils.emitLine(buffer, matrix, x + sin, y, z + cos, x - sin, y, z - cos, red, green, blue, alpha, lineWidth);
+			RenderUtils.emitLine(buffer, matrix, x - sin, y, z - cos, x - sin, y + e.getHeight(), z - cos, red, green, blue, alpha, lineWidth);
+			RenderUtils.emitLine(buffer, matrix, x - sin, y + e.getHeight(), z - cos, x + sin, y + e.getHeight(), z + cos, red, green, blue, alpha, lineWidth);
+			RenderUtils.emitLine(buffer, matrix, x + sin, y + e.getHeight(), z + cos, x + sin, y, z + cos, red, green, blue, alpha, lineWidth);
+		});
 
-		GL11.glLineWidth(width.getValueInt());
-		BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.DEBUG_LINES,
-				VertexFormats.POSITION_COLOR);
-
-		buffer.vertex(matrix, x + sin, y, z + cos).color(red, green, blue, alpha);
-		buffer.vertex(matrix, x - sin, y, z - cos).color(red, green, blue, alpha);
-		buffer.vertex(matrix, x - sin, y, z - cos).color(red, green, blue, alpha);
-		buffer.vertex(matrix, x - sin, y + e.getHeight(), z - cos).color(red, green, blue, alpha);
-		buffer.vertex(matrix, x - sin, y + e.getHeight(), z - cos).color(red, green, blue, alpha);
-		buffer.vertex(matrix, x + sin, y + e.getHeight(), z + cos).color(red, green, blue, alpha);
-		buffer.vertex(matrix, x + sin, y + e.getHeight(), z + cos).color(red, green, blue, alpha);
-		buffer.vertex(matrix, x + sin, y, z + cos).color(red, green, blue, alpha);
-		buffer.vertex(matrix, x + sin, y, z + cos).color(red, green, blue, alpha);
-
-		BufferRenderer.drawWithGlobalProgram(buffer.end());
 		GL11.glDepthFunc(GL11.GL_LEQUAL);
-		GL11.glLineWidth(1f);
-		RenderSystem.disableBlend();
 		if (ClickGUI.antiAliasing.getValue()) {
 			GL11.glDisable(GL11.GL_LINE_SMOOTH);
 			GL11.glDisable(GL13.GL_MULTISAMPLE);

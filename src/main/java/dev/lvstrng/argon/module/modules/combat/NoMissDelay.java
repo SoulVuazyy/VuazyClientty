@@ -6,8 +6,7 @@ import dev.lvstrng.argon.module.Category;
 import dev.lvstrng.argon.module.Module;
 import dev.lvstrng.argon.module.setting.BooleanSetting;
 import dev.lvstrng.argon.utils.EncryptedString;
-import net.minecraft.item.AxeItem;
-import net.minecraft.item.SwordItem;
+import dev.lvstrng.argon.utils.WorldUtils;
 import net.minecraft.util.hit.HitResult;
 
 public final class NoMissDelay extends Module implements AttackListener, BlockBreakingListener {
@@ -41,8 +40,7 @@ public final class NoMissDelay extends Module implements AttackListener, BlockBr
 
 	@Override
 	public void onAttack(AttackEvent event) {
-		if (onlyWeapon.getValue()
-				&& !(mc.player.getMainHandStack().getItem() instanceof SwordItem || mc.player.getMainHandStack().getItem() instanceof AxeItem))
+		if (onlyWeapon.getValue() && !WorldUtils.isWeapon(mc.player.getMainHandStack()))
 			return;
 
 		switch (mc.crosshairTarget.getType()) {
@@ -57,8 +55,7 @@ public final class NoMissDelay extends Module implements AttackListener, BlockBr
 
 	@Override
 	public void onBlockBreaking(BlockBreakingEvent event) {
-		if (onlyWeapon.getValue()
-				&& !(mc.player.getMainHandStack().getItem() instanceof SwordItem || mc.player.getMainHandStack().getItem() instanceof AxeItem))
+		if (onlyWeapon.getValue() && !WorldUtils.isWeapon(mc.player.getMainHandStack()))
 			return;
 
 		if (mc.crosshairTarget.getType() == HitResult.Type.BLOCK) {

@@ -1,12 +1,16 @@
 package dev.lvstrng.argon.font;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import lombok.Getter;
-import net.minecraft.client.render.*;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.Identifier;
+import org.joml.Matrix3x2fStack;
 import org.lwjgl.BufferUtils;
 
 import javax.imageio.ImageIO;
@@ -18,8 +22,11 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class GlyphPage {
+
+	private static final AtomicInteger TEXTURE_COUNTER = new AtomicInteger();
 
 	private int imgSize;
 	@Getter
@@ -31,6 +38,7 @@ public final class GlyphPage {
 
 	private BufferedImage bufferedImage;
 	private AbstractTexture loadedTexture;
+	private Identifier textureId;
 
 	public GlyphPage(Font font, boolean antiAliasing, boolean fractionalMetrics) {
 		this.font = font;
@@ -109,7 +117,6 @@ public final class GlyphPage {
 			posX += glyph.width;
 
 			glyphCharacterMap.put(ch, glyph);
-
 		}
 	}
 
@@ -121,55 +128,54 @@ public final class GlyphPage {
 
 			ByteBuffer data = BufferUtils.createByteBuffer(bytes.length).put(bytes);
 			data.flip();
-			loadedTexture = new NativeImageBackedTexture(NativeImage.read(data));
+
+			int textureIndex = TEXTURE_COUNTER.incrementAndGet();
+			NativeImageBackedTexture texture = new LinearFontTexture(
+					() -> "argon_font_" + textureIndex,
+					NativeImage.read(data)
+			);
+			texture.upload();
+
+			loadedTexture = texture;
+			textureId = Identifier.of("argon", "font/" + textureIndex);
+			MinecraftClient.getInstance().getTextureManager().registerTexture(textureId, loadedTexture);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void bindTexture() {
-		RenderSystem.setShaderTexture(0, loadedTexture.getGlId());
-	}
-
-	public void unbindTexture() {
-		RenderSystem.setShaderTexture(0, 0);
-	}
-
-	public float drawChar(MatrixStack stack, char ch, float x, float y, float red, float blue, float green, float alpha) {
+	public float drawChar(DrawContext context, char ch, float x, float y, int color) {
 		Glyph glyph = glyphCharacterMap.get(ch);
 
-		if (glyph == null)
+		if (glyph == null || textureId == null)
 			return 0;
 
-		float pageX = glyph.x / (float) imgSize;
-		float pageY = glyph.y / (float) imgSize;
+		Matrix3x2fStack matrices = context.getMatrices();
+		matrices.pushMatrix();
+		matrices.translate(x, y);
 
-		float pageWidth = glyph.width / (float) imgSize;
-		float pageHeight = glyph.height / (float) imgSize;
+		context.drawTexture(
+				RenderPipelines.GUI_TEXTURED,
+				textureId,
+				0,
+				0,
+				(float) glyph.x,
+				(float) glyph.y,
+				glyph.width,
+				glyph.height,
+				imgSize,
+				imgSize,
+				color
+		);
 
-		float width = glyph.width;
-		float height = glyph.height;
+		matrices.popMatrix();
 
-		//getPositionColorTexProgram
-		RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
-		bindTexture();
-
-		BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
-
-		bufferBuilder.vertex(stack.peek().getPositionMatrix(), x, y + height, 0).color(red, green, blue, alpha).texture(pageX, pageY + pageHeight);
-		bufferBuilder.vertex(stack.peek().getPositionMatrix(), x + width, y + height, 0).color(red, green, blue, alpha).texture(pageX + pageWidth, pageY + pageHeight);
-		bufferBuilder.vertex(stack.peek().getPositionMatrix(), x + width, y, 0).color(red, green, blue, alpha).texture(pageX + pageWidth, pageY);
-		bufferBuilder.vertex(stack.peek().getPositionMatrix(), x, y, 0).color(red, green, blue, alpha).texture(pageX, pageY);
-
-		BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-
-		unbindTexture();
-
-		return width - 8;
+		return glyph.width - 8;
 	}
 
 	public float getWidth(char ch) {
-		return glyphCharacterMap.get(ch).width;
+		Glyph glyph = glyphCharacterMap.get(ch);
+		return glyph == null ? 0 : glyph.width;
 	}
 
 	public boolean isAntiAliasingEnabled() {
@@ -196,6 +202,12 @@ public final class GlyphPage {
 
 		Glyph() {
 		}
+	}
 
+	private static final class LinearFontTexture extends NativeImageBackedTexture {
+		private LinearFontTexture(java.util.function.Supplier<String> label, NativeImage image) {
+			super(label, image);
+			this.sampler = RenderSystem.getSamplerCache().get(FilterMode.LINEAR);
+		}
 	}
 }

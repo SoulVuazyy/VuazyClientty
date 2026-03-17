@@ -94,10 +94,10 @@ public final class Friends extends Module implements ButtonListener, AttackListe
         if(!friendStatus.getValue())
             return;
 
-        RenderUtils.unscaledProjection();
+        DrawContext context = event.context;
+        RenderUtils.unscaledProjection(context);
         if(WorldUtils.getHitResult(100) instanceof EntityHitResult hitResult) {
             Entity entity = hitResult.getEntity();
-            DrawContext context = event.context;
 
             if(entity instanceof PlayerEntity player) {
                 if(manager.isFriend(player)) {
@@ -105,6 +105,6 @@ public final class Friends extends Module implements ButtonListener, AttackListe
                 }
             }
         }
-        RenderUtils.scaledProjection();
+        RenderUtils.scaledProjection(context);
     }
 }

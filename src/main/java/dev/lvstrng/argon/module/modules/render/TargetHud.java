@@ -10,12 +10,11 @@ import dev.lvstrng.argon.utils.*;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.PlayerSkinDrawer;
 import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
+import org.joml.Matrix3x2fStack;
 
 import java.awt.*;
 
@@ -57,24 +56,18 @@ public final class TargetHud extends Module implements HudListener, PacketSendLi
 		int x = xCoord.getValueInt();
 		int y = yCoord.getValueInt();
 
-		RenderUtils.unscaledProjection();
+		RenderUtils.unscaledProjection(context);
 		if ((!hudTimeout.getValue() || (System.currentTimeMillis() - lastAttackTime <= timeout)) &&
 				mc.player.getAttacking() != null && mc.player.getAttacking() instanceof PlayerEntity player && player.isAlive()) {
 			animation = RenderUtils.fast(animation, mc.player.getAttacking() instanceof PlayerEntity player1 && player1.isAlive() ? 0 : 1, 15f);
 
 			PlayerListEntry entry = mc.getNetworkHandler().getPlayerListEntry(player.getUuid());
-			float tx = (float) x;
-			float ty = (float) y;
-			MatrixStack matrixStack = context.getMatrices();
-			float thetaRotation = 90 * animation;
-			matrixStack.push();
-			matrixStack.translate(tx, ty, 0);
+			Matrix3x2fStack matrices = context.getMatrices();
+			matrices.pushMatrix();
+			matrices.scaleAround(Math.max(0.0f, 1.0f - animation), 1.0f, x + 170.0f, y + 100.0f);
 
-			matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(thetaRotation));
-			matrixStack.translate(-tx, -ty, 0);
-
-			RenderUtils.renderRoundedQuad(context.getMatrices(), new Color(0, 0, 0, 175), x, y, x + 340, y + 200, 5, 5, 5, 5, 10);
-			RenderUtils.renderRoundedQuad(context.getMatrices(), Utils.getMainColor(255, 1), x, y + 27, x + 340, y + 29, 0, 0, 0, 0, 10);
+		RenderUtils.renderRoundedQuad(context, new Color(0, 0, 0, 175), x, y, x + 340, y + 200, 5, 5, 5, 5, 10);
+		RenderUtils.renderRoundedQuad(context, Utils.getMainColor(255, 1), x, y + 27, x + 340, y + 29, 0, 0, 0, 0, 10);
 
 			TextRenderer.drawString(player.getName().getString() + " - " + MathUtils.roundToDecimal(player.distanceTo(mc.player), 0.5) + " blocks", context, x + 23, y + 5, Color.WHITE.getRGB());
 
@@ -84,8 +77,8 @@ public final class TargetHud extends Module implements HudListener, PacketSendLi
 
 				TextRenderer.drawString(chars, context, charOff1, y + 35, new Color(255, 80, 80, 255).getRGB());
 
-				matrixStack.pop();
-				RenderUtils.scaledProjection();
+				matrices.popMatrix();
+				RenderUtils.scaledProjection(context);
 				return;
 			} else {
 				int charOff1 = x + 5;
@@ -102,7 +95,7 @@ public final class TargetHud extends Module implements HudListener, PacketSendLi
 
 			TextRenderer.drawString("Ping: " + entry.getLatency(), context, x + 5, y + 125, Color.WHITE.getRGB());
 
-			PlayerSkinDrawer.draw(context, entry.getSkinTextures().texture(), x + 3, y + 3, 20);
+			PlayerSkinDrawer.draw(context, entry.getSkinTextures(), x + 3, y + 3, 20);
 
 			if (player.hurtTime != 0) {
 				int charOff1 = x + 125;
@@ -112,11 +105,11 @@ public final class TargetHud extends Module implements HudListener, PacketSendLi
 				//TextRenderer.drawString("Damage Tick: " + player.hurtTime, context, x + 125, y + 65, Color.WHITE.getRGB());
 				context.fill(x + 125, y + 80, (x + 125) + (player.hurtTime * 15), y + 83, getDamageTickColor(player.hurtTime).getRGB());
 			}
-			matrixStack.pop();
+			matrices.popMatrix();
 		} else {
 			animation = RenderUtils.fast(animation, 1, 15f);
 		}
-		RenderUtils.scaledProjection();
+		RenderUtils.scaledProjection(context);
 	}
 
 	private Color getDamageTickColor(int hurtTime) {

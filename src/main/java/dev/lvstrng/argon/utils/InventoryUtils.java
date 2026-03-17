@@ -19,7 +19,7 @@ import static dev.lvstrng.argon.Argon.mc;
 public final class InventoryUtils {
 
 	public static void setInvSlot(int slot) {
-		mc.player.getInventory().selectedSlot = slot;
+		mc.player.getInventory().setSelectedSlot(slot);
 		((ClientPlayerInteractionManagerAccessor) mc.interactionManager).syncSlot();
 	}
 
@@ -31,7 +31,7 @@ public final class InventoryUtils {
 			if (!item.test(itemStack.getItem()))
 				continue;
 
-			inv.selectedSlot = i;
+			inv.setSelectedSlot(i);
 			return true;
 		}
 
@@ -85,7 +85,7 @@ public final class InventoryUtils {
 		Inventory playerInventory = mc.player.getInventory();
 
 		for (int itemIndex = 0; itemIndex < 9; itemIndex++) {
-			if (playerInventory.getStack(itemIndex).getItem() instanceof SwordItem)
+			if (WorldUtils.isSword(playerInventory.getStack(itemIndex)))
 				return itemIndex;
 		}
 
@@ -132,7 +132,7 @@ public final class InventoryUtils {
 		assert mc.player != null;
 		PlayerInventory inv = mc.player.getInventory();
 		for (int index = 9; index < 36; index++) {
-			if (inv.main.get(index).getItem() == Items.TOTEM_OF_UNDYING)
+			if (inv.getStack(index).getItem() == Items.TOTEM_OF_UNDYING)
 				return index;
 		}
 		return -1;
@@ -142,7 +142,7 @@ public final class InventoryUtils {
 		int itemIndex = getAxeSlot();
 
 		if (itemIndex != -1) {
-			mc.player.getInventory().selectedSlot = itemIndex;
+			mc.player.getInventory().setSelectedSlot(itemIndex);
 			return true;
 		} else return false;
 	}
@@ -153,7 +153,7 @@ public final class InventoryUtils {
 		List<Integer> totemIndexes = new ArrayList<>();
 
 		for(int i = 9; i < 36; i++) {
-			if(inventory.main.get(i).getItem() == Items.TOTEM_OF_UNDYING)
+			if(inventory.getStack(i).getItem() == Items.TOTEM_OF_UNDYING)
 				totemIndexes.add(i);
 		}
 
@@ -172,7 +172,7 @@ public final class InventoryUtils {
 		int slotIndex = random.nextInt(27) + 9;
 		for (int i = 0; i < 27; i++) {
 			int index = (slotIndex + i) % 36;
-			ItemStack itemStack = inventory.main.get(index);
+			ItemStack itemStack = inventory.getStack(index);
 			if (itemStack.getItem() instanceof SplashPotionItem && (index != 36 || index != 37 || index != 38 || index != 39)) {
 				if (!itemStack.get(DataComponentTypes.POTION_CONTENTS).getEffects().toString().contains(potion.toString()))
 					return -1;
@@ -189,8 +189,8 @@ public final class InventoryUtils {
 		StatusEffectInstance instance = new StatusEffectInstance(Registries.STATUS_EFFECT.getEntry(effect), duration, amplifier);
 
 		for (int index = 9; index < 34; index++)
-			if (inv.main.get(index).getItem() instanceof SplashPotionItem)
-				if (inv.main.get(index).get(DataComponentTypes.POTION_CONTENTS).getEffects().toString().contains(instance.toString()))
+			if (inv.getStack(index).getItem() instanceof SplashPotionItem)
+				if (inv.getStack(index).get(DataComponentTypes.POTION_CONTENTS).getEffects().toString().contains(instance.toString()))
 					return index;
 
 		return -1;
@@ -201,9 +201,9 @@ public final class InventoryUtils {
 		List<Integer> slots = new ArrayList<>();
 
 		for (int i = 0; i < 9; i++) {
-			if (inventory.main.get(i).isEmpty())
+			if (inventory.getStack(i).isEmpty())
 				slots.add(i);
-			else if (slots.contains(i) && !inventory.main.get(i).isEmpty())
+			else if (slots.contains(i) && !inventory.getStack(i).isEmpty())
 				slots.remove(i);
 		}
 
@@ -214,7 +214,7 @@ public final class InventoryUtils {
 		Inventory playerInventory = mc.player.getInventory();
 
 		for (int itemIndex = 0; itemIndex < 9; itemIndex++) {
-			if (playerInventory.getStack(itemIndex).getItem() instanceof AxeItem)
+			if (WorldUtils.isAxe(playerInventory.getStack(itemIndex)))
 				return itemIndex;
 		}
 

@@ -49,13 +49,13 @@ public final class TotemOffhand extends Module implements TickListener {
             active = true;
 
         if(active) {
-            if (switchClock < switchDelay.getValueInt()) {
-                switchClock++;
-                return;
-            }
+			if (switchClock < switchDelay.getValueInt()) {
+				switchClock++;
+				return;
+			}
 
-            if(previousSlot == -1)
-                previousSlot = mc.player.getInventory().selectedSlot;
+			if(previousSlot == -1)
+				previousSlot = mc.player.getInventory().getSelectedSlot();
 
             if (InventoryUtils.selectItemFromHotbar(Items.TOTEM_OF_UNDYING)) {
                 if (equipClock < equipDelay.getValueInt()) {

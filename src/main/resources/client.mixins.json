@@ -11,12 +11,10 @@
     "WorldAccessor"
   ],
   "client": [
-    "BufferRendererAccessor",
     "CameraMixin",
     "ClientPlayerEntityMixin",
     "ClientPlayerInteractionManagerAccessor",
     "ClientPlayerInteractionManagerMixin",
-    "FrustumAccessor",
     "GameRendererMixin",
     "HandledScreenMixin",
     "InGameHudMixin",
@@ -25,12 +23,9 @@
     "KeyboardMixin",
     "MinecraftClientAccessor",
     "MinecraftClientMixin",
-    "MouseHandlerAccessor",
     "MouseMixin",
     "OtherClientPlayerEntityAccessor",
-    "ScreenMixin",
-    "ShaderProgramAccessor",
-    "WorldRendererAccessor"
+    "ScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

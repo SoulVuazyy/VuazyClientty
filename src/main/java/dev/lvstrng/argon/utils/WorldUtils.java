@@ -3,16 +3,13 @@ package dev.lvstrng.argon.utils;
 import dev.lvstrng.argon.Argon;
 import dev.lvstrng.argon.module.modules.client.Friends;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileUtil;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ToolItem;
-import net.minecraft.item.ToolMaterial;
-import net.minecraft.item.ToolMaterials;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -62,7 +59,7 @@ public final class WorldUtils {
 		PlayerEntity minPlayer = null;
 
 		for (PlayerEntity player : mc.world.getPlayers()) {
-			float distance = (float) distance(toPlayer.getPos(), player.getPos());
+			float distance = (float) distance(toPlayer.getEntityPos(), player.getEntityPos());
 
 			if(excludeFriends && Argon.INSTANCE.getModuleManager().getModule(Friends.class).disableAimAssist.getValue() && Argon.INSTANCE.getFriendManager().isFriend(player))
 				continue;
@@ -102,7 +99,7 @@ public final class WorldUtils {
 		if (entity == null || mc.world == null) return null;
 
 		double d = distance;
-		Vec3d cameraPosVec = entity.getCameraPosVec(RenderTickCounter.ONE.getTickDelta(true));
+		Vec3d cameraPosVec = entity.getCameraPosVec(RenderUtils.tickProgress());
 		Vec3d rotationVec = getPlayerLookVec(yaw, pitch);
 		Vec3d range = cameraPosVec.add(rotationVec.x * d, rotationVec.y * d, rotationVec.z * d);
 
@@ -138,7 +135,7 @@ public final class WorldUtils {
 
 	public static void placeBlock(BlockHitResult blockHit, boolean swingHand) {
 		ActionResult result = mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, blockHit);
-		if (result.isAccepted() && result.shouldSwingHand() && swingHand) mc.player.swingHand(Hand.MAIN_HAND);
+		if (result.isAccepted() && swingHand) mc.player.swingHand(Hand.MAIN_HAND);
 	}
 
 	public static Stream<WorldChunk> getLoadedChunks() {
@@ -177,8 +174,8 @@ public final class WorldUtils {
 
 	public static boolean isShieldFacingAway(PlayerEntity player) {
 		if (mc.player != null && player != null) {
-			Vec3d playerPos = mc.player.getPos();
-			Vec3d targetPos = player.getPos();
+			Vec3d playerPos = mc.player.getEntityPos();
+			Vec3d targetPos = player.getEntityPos();
 
 			Vec3d directionToPlayer = playerPos.subtract(targetPos).normalize();
 
@@ -197,12 +194,23 @@ public final class WorldUtils {
 		return false;
 	}
 
+	public static boolean isSword(ItemStack itemStack) {
+		return itemStack.isIn(ItemTags.SWORDS);
+	}
+
+	public static boolean isAxe(ItemStack itemStack) {
+		return itemStack.isIn(ItemTags.AXES);
+	}
+
+	public static boolean isWeapon(ItemStack itemStack) {
+		return isSword(itemStack) || isAxe(itemStack);
+	}
+
 	public static boolean isTool(ItemStack itemStack) {
-		if (!(itemStack.getItem() instanceof ToolItem)) {
-			return false;
-		}
-		ToolMaterial material = ((ToolItem) itemStack.getItem()).getMaterial();
-		return material == ToolMaterials.DIAMOND || material == ToolMaterials.NETHERITE;
+		return isWeapon(itemStack)
+				|| itemStack.isIn(ItemTags.PICKAXES)
+				|| itemStack.isIn(ItemTags.SHOVELS)
+				|| itemStack.isIn(ItemTags.HOES);
 	}
 
 	public static boolean isCrit(PlayerEntity player, Entity target) {

@@ -53,7 +53,7 @@ public final class KeyPearl extends Module implements TickListener {
 
         if(active) {
             if(previousSlot == -1)
-                previousSlot = mc.player.getInventory().selectedSlot;
+                previousSlot = mc.player.getInventory().getSelectedSlot();
 
             InventoryUtils.selectItemFromHotbar(Items.ENDER_PEARL);
 
@@ -64,7 +64,7 @@ public final class KeyPearl extends Module implements TickListener {
 
             if(!hasActivated) {
                 ActionResult result = mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
-                if (result.isAccepted() && result.shouldSwingHand())
+                if (result.isAccepted())
                     mc.player.swingHand(Hand.MAIN_HAND);
 
                 hasActivated = true;

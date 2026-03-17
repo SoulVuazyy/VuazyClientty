@@ -78,7 +78,7 @@ public abstract class RenderableSetting {
 			int textCenter = parentCenter - tw / 2;
 
 			RenderUtils.renderRoundedQuad(
-					context.getMatrices(),
+					context,
 					new Color(100, 100, 100, 100),
 					textCenter - 5,
 					(mc.getWindow().getHeight() / 2) + 294,

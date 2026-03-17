@@ -11,11 +11,10 @@ import dev.lvstrng.argon.utils.EncryptedString;
 import dev.lvstrng.argon.utils.MathUtils;
 import dev.lvstrng.argon.utils.MouseSimulation;
 import dev.lvstrng.argon.utils.TimerUtils;
+import dev.lvstrng.argon.utils.WorldUtils;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.AxeItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.RangedWeaponItem;
-import net.minecraft.item.SwordItem;
 import net.minecraft.util.hit.HitResult;
 import org.lwjgl.glfw.GLFW;
 
@@ -118,7 +117,7 @@ public final class AutoClicker extends Module implements TickListener {
 		if (mc.player.isUsingItem())
 			return;
 
-		if (onlyWeapon.getValue() && !(mainhand instanceof SwordItem || mainhand instanceof AxeItem))
+		if (onlyWeapon.getValue() && !WorldUtils.isWeapon(mc.player.getMainHandStack()))
 			return;
 
 		if (onClick.getValue() && GLFW.glfwGetMouseButton(mc.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) != GLFW.GLFW_PRESS)

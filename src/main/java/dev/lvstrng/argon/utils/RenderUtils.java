@@ -1,35 +1,45 @@
 package dev.lvstrng.argon.utils;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.systems.VertexSorter;
 import dev.lvstrng.argon.module.modules.client.ClickGUI;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderLayers;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
+import org.joml.Matrix3x2fStack;
+import org.joml.Matrix3x2fc;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
 import java.awt.*;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import static dev.lvstrng.argon.Argon.mc;
 
-
 public final class RenderUtils {
-	public static VertexSorter vertexSorter;
 	public static boolean rendering3D = true;
+	private static int projectionDepth;
 
 	public static Vec3d getCameraPos() {
-		return mc.getBlockEntityRenderDispatcher().camera.getPos();
+		return mc.gameRenderer.getCamera().getCameraPos();
+	}
+
+	public static float tickProgress() {
+		return mc.getRenderTickCounter().getTickProgress(true);
+	}
+
+	public static float frameDelta() {
+		return mc.getRenderTickCounter().getDynamicDeltaTicks();
 	}
 
 	public static double deltaTime() {
@@ -50,79 +60,134 @@ public final class RenderUtils {
 		return (new Vec3d((f2 * f3), f4, (f1 * f3))).normalize();
 	}
 
-	public static void unscaledProjection() {
-		vertexSorter = RenderSystem.getVertexSorting();
-		RenderSystem.setProjectionMatrix(new Matrix4f().setOrtho(0, mc.getWindow().getFramebufferWidth(), mc.getWindow().getFramebufferHeight(), 0, 1000, 21000), VertexSorter.BY_Z);
+	public static void unscaledProjection(DrawContext context) {
+		if (projectionDepth++ == 0) {
+			float scaleFactor = (float) MinecraftClient.getInstance().getWindow().getScaleFactor();
+			context.getMatrices().pushMatrix();
+			context.getMatrices().scale(1.0F / scaleFactor, 1.0F / scaleFactor);
+		}
 		rendering3D = false;
 	}
 
-	public static void scaledProjection() {
-		RenderSystem.setProjectionMatrix(new Matrix4f().setOrtho(0, (float) (mc.getWindow().getFramebufferWidth() / mc.getWindow().getScaleFactor()), (float) (mc.getWindow().getFramebufferHeight() / mc.getWindow().getScaleFactor()), 0, 1000, 21000), vertexSorter);
+	public static void scaledProjection(DrawContext context) {
+		if (projectionDepth == 0) {
+			rendering3D = true;
+			return;
+		}
+
+		if (--projectionDepth == 0) {
+			context.getMatrices().popMatrix();
+		}
 		rendering3D = true;
 	}
 
-	public static void renderRoundedQuad(MatrixStack matrices, Color c, double x, double y, double x2, double y2, double corner1, double corner2, double corner3, double corner4, double samples) {
-		int color = c.getRGB();
-		Matrix4f matrix = matrices.peek().getPositionMatrix();
-		float f = (float) (color >> 24 & 255) / 255.0F;
-		float g = (float) (color >> 16 & 255) / 255.0F;
-		float h = (float) (color >> 8 & 255) / 255.0F;
-		float k = (float) (color & 255) / 255.0F;
-		RenderSystem.enableBlend();
-		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-		RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-
-		renderRoundedQuadInternal(matrix, g, h, k, f, x, y, x2, y2, corner1, corner2, corner3, corner4, samples);
-		RenderSystem.enableCull();
-		RenderSystem.disableBlend();
-	}
-
-	private static void setup() {
-		RenderSystem.enableBlend();
-		RenderSystem.defaultBlendFunc();
-	}
-
-	private static void cleanup() {
-		RenderSystem.enableCull();
-		RenderSystem.disableBlend();
-	}
-
-	public static void renderRoundedQuad(MatrixStack matrices, Color c, double x, double y, double x1, double y1, double rad, double samples) {
-		renderRoundedQuad(matrices, c, x, y, x1, y1, rad, rad, rad, rad, samples);
-	}
-
-	public static void renderRoundedOutlineInternal(Matrix4f matrix, float cr, float cg, float cb, float ca, double fromX, double fromY, double toX, double toY, double radC1, double radC2, double radC3, double radC4, double width, double samples) {
-		BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR);
-
-		double[][] map = new double[][]{new double[]{toX - radC4, toY - radC4, radC4}, new double[]{toX - radC2, fromY + radC2, radC2},
-				new double[]{fromX + radC1, fromY + radC1, radC1}, new double[]{fromX + radC3, toY - radC3, radC3}};
-		for (int i = 0; i < 4; i++) {
-			double[] current = map[i];
-			double rad = current[2];
-			for (double r = i * 90d; r < (360 / 4d + i * 90d); r += (90 / samples)) {
-				float rad1 = (float) Math.toRadians(r);
-				double sin1 = Math.sin(rad1);
-				float sin = (float) (sin1 * rad);
-				double cos1 = Math.cos(rad1);
-				float cos = (float) (cos1 * rad);
-				bufferBuilder.vertex(matrix, (float) current[0] + sin, (float) current[1] + cos, 0.0F).color(cr, cg, cb, ca);
-				bufferBuilder.vertex(matrix, (float) (current[0] + sin + sin1 * width), (float) (current[1] + cos + cos1 * width), 0.0F).color(cr, cg, cb, ca);
-			}
-			float rad1 = (float) Math.toRadians((360 / 4d + i * 90d));
-			double sin1 = Math.sin(rad1);
-			float sin = (float) (sin1 * rad);
-			double cos1 = Math.cos(rad1);
-			float cos = (float) (cos1 * rad);
-			bufferBuilder.vertex(matrix, (float) current[0] + sin, (float) current[1] + cos, 0.0F).color(cr, cg, cb, ca);
-			bufferBuilder.vertex(matrix, (float) (current[0] + sin + sin1 * width), (float) (current[1] + cos + cos1 * width), 0.0F).color(cr, cg, cb, ca);
+	public static void drawLayer(RenderLayer layer, Consumer<VertexConsumer> runner) {
+		int bufferSize = Math.max(256, Math.min(layer.getExpectedBufferSize(), 8192));
+		try (BufferAllocator allocator = new BufferAllocator(bufferSize)) {
+			VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(allocator);
+			runner.accept(immediate.getBuffer(layer));
+			immediate.draw(layer);
 		}
-		int i = 0;
-		double[] current = map[i];
-		double rad = current[2];
-		float cos = (float) (rad);
-		bufferBuilder.vertex(matrix, (float) current[0], (float) current[1] + cos, 0.0F).color(cr, cg, cb, ca);
-		bufferBuilder.vertex(matrix, (float) (current[0]), (float) (current[1] + cos + width), 0.0F).color(cr, cg, cb, ca);
-		BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
+	}
+
+	public static void emitLine(VertexConsumer buffer, Matrix4f matrix, float x1, float y1, float z1, float x2, float y2, float z2, float red, float green, float blue, float alpha, float lineWidth) {
+		float dx = x2 - x1;
+		float dy = y2 - y1;
+		float dz = z2 - z1;
+		float length = Math.max(0.0001F, MathHelper.sqrt(dx * dx + dy * dy + dz * dz));
+		float nx = dx / length;
+		float ny = dy / length;
+		float nz = dz / length;
+
+		buffer.vertex(matrix, x1, y1, z1).color(red, green, blue, alpha).normal(nx, ny, nz).lineWidth(lineWidth);
+		buffer.vertex(matrix, x2, y2, z2).color(red, green, blue, alpha).normal(nx, ny, nz).lineWidth(lineWidth);
+	}
+
+	private static void addQuad(VertexConsumer buffer, Matrix4f matrix, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4, float red, float green, float blue, float alpha) {
+		buffer.vertex(matrix, x1, y1, z1).color(red, green, blue, alpha);
+		buffer.vertex(matrix, x2, y2, z2).color(red, green, blue, alpha);
+		buffer.vertex(matrix, x3, y3, z3).color(red, green, blue, alpha);
+		buffer.vertex(matrix, x4, y4, z4).color(red, green, blue, alpha);
+	}
+
+	private static void addQuad(VertexConsumer buffer, Matrix3x2fc matrix, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float red, float green, float blue, float alpha) {
+		buffer.vertex(matrix, x1, y1).color(red, green, blue, alpha);
+		buffer.vertex(matrix, x2, y2).color(red, green, blue, alpha);
+		buffer.vertex(matrix, x3, y3).color(red, green, blue, alpha);
+		buffer.vertex(matrix, x4, y4).color(red, green, blue, alpha);
+	}
+
+	public static void renderRoundedQuad(DrawContext context, Color color, double x, double y, double x2, double y2, double corner1, double corner2, double corner3, double corner4, double samples) {
+		int left = (int) Math.floor(Math.min(x, x2));
+		int top = (int) Math.floor(Math.min(y, y2));
+		int right = (int) Math.ceil(Math.max(x, x2));
+		int bottom = (int) Math.ceil(Math.max(y, y2));
+
+		int width = right - left;
+		int height = bottom - top;
+		if (width <= 0 || height <= 0) {
+			return;
+		}
+
+		int radiusTopLeft = clampRadius(corner1, width, height);
+		int radiusTopRight = clampRadius(corner2, width, height);
+		int radiusBottomLeft = clampRadius(corner3, width, height);
+		int radiusBottomRight = clampRadius(corner4, width, height);
+		int packedColor = color.getRGB();
+
+		for (int row = 0; row < height; row++) {
+			int leftInset = getLeftInsetForRow(row, height, radiusTopLeft, radiusBottomLeft);
+			int rightInset = getRightInsetForRow(row, height, radiusTopRight, radiusBottomRight);
+			fillRow(context, left + leftInset, right - rightInset, top + row, packedColor);
+		}
+	}
+
+	public static void renderRoundedQuad(DrawContext context, Color color, double x, double y, double x1, double y1, double rad, double samples) {
+		renderRoundedQuad(context, color, x, y, x1, y1, rad, rad, rad, rad, samples);
+	}
+
+	public static void renderRoundedOutlineInternal(Matrix3x2fc matrix, float cr, float cg, float cb, float ca, double fromX, double fromY, double toX, double toY, double radC1, double radC2, double radC3, double radC4, double width, double samples) {
+		drawLayer(RenderLayers.debugQuads(), buffer -> {
+			double[][] map = new double[][]{
+					new double[]{toX - radC4, toY - radC4, radC4},
+					new double[]{toX - radC2, fromY + radC2, radC2},
+					new double[]{fromX + radC1, fromY + radC1, radC1},
+					new double[]{fromX + radC3, toY - radC3, radC3}
+			};
+
+			for (int i = 0; i < 4; i++) {
+				double[] current = map[i];
+				double radius = current[2];
+				double start = i * 90D;
+				double end = start + 90D;
+				double step = 90D / samples;
+
+				for (double angle = start; angle < end; angle += step) {
+					double nextAngle = Math.min(angle + step, end);
+
+					float rad1 = (float) Math.toRadians(angle);
+					float rad2 = (float) Math.toRadians(nextAngle);
+
+					float sin1 = (float) Math.sin(rad1);
+					float cos1 = (float) Math.cos(rad1);
+					float sin2 = (float) Math.sin(rad2);
+					float cos2 = (float) Math.cos(rad2);
+
+					float innerX1 = (float) current[0] + sin1 * (float) radius;
+					float innerY1 = (float) current[1] + cos1 * (float) radius;
+					float innerX2 = (float) current[0] + sin2 * (float) radius;
+					float innerY2 = (float) current[1] + cos2 * (float) radius;
+
+					float outerRadius = (float) (radius + width);
+					float outerX1 = (float) current[0] + sin1 * outerRadius;
+					float outerY1 = (float) current[1] + cos1 * outerRadius;
+					float outerX2 = (float) current[0] + sin2 * outerRadius;
+					float outerY2 = (float) current[1] + cos2 * outerRadius;
+
+					addQuad(buffer, matrix, innerX1, innerY1, outerX1, outerY1, outerX2, outerY2, innerX2, innerY2, cr, cg, cb, ca);
+				}
+			}
+		});
 	}
 
 	public static void setScissorRegion(int x, int y, int width, int height) {
@@ -138,53 +203,89 @@ public final class RenderUtils {
 		GL11.glEnable(GL11.GL_SCISSOR_TEST);
 	}
 
-	public static void renderCircle(MatrixStack matrices, Color c, double originX, double originY, double rad, int segments) {
-		int segments1 = MathHelper.clamp(segments, 4, 360);
-		int color = c.getRGB();
+	public static void renderCircle(DrawContext context, Color color, double originX, double originY, double radius, int segments) {
+		int top = (int) Math.floor(originY - radius);
+		int bottom = (int) Math.ceil(originY + radius);
+		int packedColor = color.getRGB();
 
-		Matrix4f matrix = matrices.peek().getPositionMatrix();
-		float f = (float) (color >> 24 & 255) / 255.0F;
-		float g = (float) (color >> 16 & 255) / 255.0F;
-		float h = (float) (color >> 8 & 255) / 255.0F;
-		float k = (float) (color & 255) / 255.0F;
-		setup();
-		RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-		BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
-		for (int i = 0; i < 360; i += Math.min(360 / segments1, 360 - i)) {
-			double radians = Math.toRadians(i);
-			double sin = Math.sin(radians) * rad;
-			double cos = Math.cos(radians) * rad;
-			bufferBuilder.vertex(matrix, (float) (originX + sin), (float) (originY + cos), 0).color(g, h, k, f);
+		for (int y = top; y < bottom; y++) {
+			double distanceY = (y + 0.5D) - originY;
+			double radiusSquared = radius * radius;
+			double inner = radiusSquared - (distanceY * distanceY);
+			if (inner <= 0.0D) {
+				continue;
+			}
+
+			double distanceX = Math.sqrt(inner);
+			int left = (int) Math.floor(originX - distanceX);
+			int right = (int) Math.ceil(originX + distanceX);
+			fillRow(context, left, right, y, packedColor);
 		}
-		BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-		cleanup();
 	}
 
-	public static void renderShaderRect(MatrixStack matrixStack, Color color, Color color2, Color color3, Color color4, float f, float f2, float f3, float f4, float f5, float f6) {
-		RenderSystem.enableBlend();
-		RenderSystem.defaultBlendFunc();
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder bufferBuilder = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
-		bufferBuilder.vertex(matrixStack.peek().getPositionMatrix(), f - 10, f2 - 10, 0);
-		bufferBuilder.vertex(matrixStack.peek().getPositionMatrix(), f - 10, f2 + f4 + 20, 0);
-		bufferBuilder.vertex(matrixStack.peek().getPositionMatrix(), f + f3 + 20, f2 + f4 + 20, 0);
-		bufferBuilder.vertex(matrixStack.peek().getPositionMatrix(), f + f3 + 20, f2 - 10, 0);
-		BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-		RenderSystem.disableBlend();
+	public static void renderShaderRect(Matrix3x2fStack matrixStack, Color color, Color color2, Color color3, Color color4, float f, float f2, float f3, float f4, float f5, float f6) {
+		float alpha = color.getAlpha() / 255F;
+		float red = color.getRed() / 255F;
+		float green = color.getGreen() / 255F;
+		float blue = color.getBlue() / 255F;
+
+		drawLayer(RenderLayers.debugQuads(), buffer ->
+				addQuad(buffer, matrixStack, f - 10, f2 - 10, f - 10, f2 + f4 + 20, f + f3 + 20, f2 + f4 + 20, f + f3 + 20, f2 - 10, red, green, blue, alpha));
 	}
 
 	public static void renderRoundedOutline(DrawContext poses, Color c, double fromX, double fromY, double toX, double toY, double rad1, double rad2, double rad3, double rad4, double width, double samples) {
-		int color = c.getRGB();
-		Matrix4f matrix = poses.getMatrices().peek().getPositionMatrix();
-		float f = (float) (color >> 24 & 255) / 255.0F;
-		float g = (float) (color >> 16 & 255) / 255.0F;
-		float h = (float) (color >> 8 & 255) / 255.0F;
-		float k = (float) (color & 255) / 255.0F;
-		setup();
-		RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+		int left = (int) Math.floor(Math.min(fromX, toX));
+		int top = (int) Math.floor(Math.min(fromY, toY));
+		int right = (int) Math.ceil(Math.max(fromX, toX));
+		int bottom = (int) Math.ceil(Math.max(fromY, toY));
 
-		renderRoundedOutlineInternal(matrix, g, h, k, f, fromX, fromY, toX, toY, rad1, rad2, rad3, rad4, width, samples);
-		cleanup();
+		int outerWidth = right - left;
+		int outerHeight = bottom - top;
+		if (outerWidth <= 0 || outerHeight <= 0) {
+			return;
+		}
+
+		int thickness = Math.max(1, (int) Math.round(width));
+		if (thickness * 2 >= outerWidth || thickness * 2 >= outerHeight) {
+			renderRoundedQuad(poses, c, fromX, fromY, toX, toY, rad1, rad2, rad3, rad4, samples);
+			return;
+		}
+
+		int radiusTopLeft = clampRadius(rad1, outerWidth, outerHeight);
+		int radiusTopRight = clampRadius(rad2, outerWidth, outerHeight);
+		int radiusBottomLeft = clampRadius(rad3, outerWidth, outerHeight);
+		int radiusBottomRight = clampRadius(rad4, outerWidth, outerHeight);
+
+		int innerLeft = left + thickness;
+		int innerTop = top + thickness;
+		int innerRight = right - thickness;
+		int innerBottom = bottom - thickness;
+		int innerWidth = innerRight - innerLeft;
+		int innerHeight = innerBottom - innerTop;
+
+		int innerRadiusTopLeft = Math.max(0, radiusTopLeft - thickness);
+		int innerRadiusTopRight = Math.max(0, radiusTopRight - thickness);
+		int innerRadiusBottomLeft = Math.max(0, radiusBottomLeft - thickness);
+		int innerRadiusBottomRight = Math.max(0, radiusBottomRight - thickness);
+		int packedColor = c.getRGB();
+
+		for (int row = 0; row < outerHeight; row++) {
+			int outerLeft = left + getLeftInsetForRow(row, outerHeight, radiusTopLeft, radiusBottomLeft);
+			int outerRight = right - getRightInsetForRow(row, outerHeight, radiusTopRight, radiusBottomRight);
+			int y = top + row;
+
+			if (y < innerTop || y >= innerBottom) {
+				fillRow(poses, outerLeft, outerRight, y, packedColor);
+				continue;
+			}
+
+			int innerRow = y - innerTop;
+			int innerRowLeft = innerLeft + getLeftInsetForRow(innerRow, innerHeight, innerRadiusTopLeft, innerRadiusBottomLeft);
+			int innerRowRight = innerRight - getRightInsetForRow(innerRow, innerHeight, innerRadiusTopRight, innerRadiusBottomRight);
+
+			fillRow(poses, outerLeft, innerRowLeft, y, packedColor);
+			fillRow(poses, innerRowRight, outerRight, y, packedColor);
+		}
 	}
 
 	public static MatrixStack matrixFrom(double x, double y, double z) {
@@ -194,175 +295,158 @@ public final class RenderUtils {
 		matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(camera.getPitch()));
 		matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(camera.getYaw() + 180.0F));
 
-		matrices.translate(x - camera.getPos().x, y - camera.getPos().y, z - camera.getPos().z);
+		Vec3d cameraPos = camera.getCameraPos();
+		matrices.translate(x - cameraPos.x, y - cameraPos.y, z - cameraPos.z);
 
 		return matrices;
 	}
 
-	/**
-	 * Renders a colored quad (rectangle) on the screen.
-	 *
-	 * @param matrices The matrix stack to use for rendering.
-	 * @param x        The x-coordinate of the top-left corner of the quad.
-	 * @param y        The y-coordinate of the top-left corner of the quad.
-	 * @param width    The width of the quad.
-	 * @param height   The height of the quad.
-	 * @param color    The color of the quad in RGBA format (e.g., 0xFF00FF00 for green).
-	 */
-	public static void renderQuad(MatrixStack matrices, float x, float y, float width, float height, int color) {
+	public static void renderQuad(Matrix3x2fStack matrices, float x, float y, float width, float height, int color) {
 		float alpha = ((color >> 24) & 0xFF) / 255f;
 		float red = ((color >> 16) & 0xFF) / 255f;
 		float green = ((color >> 8) & 0xFF) / 255f;
 		float blue = (color & 0xFF) / 255f;
 
-		matrices.push();
-		matrices.scale(0.5f, 0.5f, 0.5f); // Adjust scale if necessary
-		matrices.translate(x, y, 0.0);
+		matrices.pushMatrix();
+		matrices.scale(0.5f, 0.5f);
+		matrices.translate(x, y);
 
-		Tessellator tessellator = Tessellator.getInstance();
-		RenderSystem.enableBlend();
-		RenderSystem.defaultBlendFunc();
+		drawLayer(RenderLayers.debugQuads(), buffer ->
+				addQuad(buffer, matrices, 0.0F, 0.0F, 0.0F, height, width, height, width, 0.0F, red, green, blue, alpha));
 
-		BufferBuilder bufferBuilder = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-		bufferBuilder.vertex(0.0F, 0.0F, 0.0F).color(red, green, blue, alpha);
-		bufferBuilder.vertex(0.0F, height, 0.0F).color(red, green, blue, alpha);
-		bufferBuilder.vertex(width, height, 0.0F).color(red, green, blue, alpha);
-		bufferBuilder.vertex(width, 0.0F, 0.0F).color(red, green, blue, alpha);
-		BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-
-		RenderSystem.disableBlend();
-		matrices.pop();
+		matrices.popMatrix();
 	}
 
-	public static void renderRoundedQuadInternal(Matrix4f matrix, float cr, float cg, float cb, float ca, double fromX, double fromY, double toX, double toY, double corner1, double corner2, double corner3, double corner4, double samples) {
-		BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+	public static void renderRoundedQuadInternal(Matrix3x2fc matrix, float cr, float cg, float cb, float ca, double fromX, double fromY, double toX, double toY, double corner1, double corner2, double corner3, double corner4, double samples) {
+		drawLayer(RenderLayers.debugTriangleFan(), buffer -> {
+			buffer.vertex(matrix, (float) ((fromX + toX) / 2.0), (float) ((fromY + toY) / 2.0)).color(cr, cg, cb, ca);
 
-		double[][] map = new double[][]{new double[]{toX - corner4, toY - corner4, corner4}, new double[]{toX - corner2, fromY + corner2, corner2},
-				new double[]{fromX + corner1, fromY + corner1, corner1}, new double[]{fromX + corner3, toY - corner3, corner3}};
-		for (int i = 0; i < 4; i++) {
-			double[] current = map[i];
-			double rad = current[2];
-			for (double r = i * 90d; r < (360 / 4d + i * 90d); r += (90 / samples)) {
-				float rad1 = (float) Math.toRadians(r);
-				float sin = (float) (Math.sin(rad1) * rad);
-				float cos = (float) (Math.cos(rad1) * rad);
-				bufferBuilder.vertex(matrix, (float) current[0] + sin, (float) current[1] + cos, 0.0F).color(cr, cg, cb, ca);
+			double[][] map = new double[][]{
+					new double[]{toX - corner4, toY - corner4, corner4},
+					new double[]{toX - corner2, fromY + corner2, corner2},
+					new double[]{fromX + corner1, fromY + corner1, corner1},
+					new double[]{fromX + corner3, toY - corner3, corner3}
+			};
+
+			for (int i = 0; i < 4; i++) {
+				double[] current = map[i];
+				double radius = current[2];
+				double start = i * 90D;
+				double end = start + 90D;
+				double step = 90D / samples;
+
+				for (double angle = start; angle <= end; angle += step) {
+					float radians = (float) Math.toRadians(Math.min(angle, end));
+					float sin = (float) (Math.sin(radians) * radius);
+					float cos = (float) (Math.cos(radians) * radius);
+					buffer.vertex(matrix, (float) current[0] + sin, (float) current[1] + cos).color(cr, cg, cb, ca);
+				}
 			}
-			float rad1 = (float) Math.toRadians((360 / 4d + i * 90d));
-			float sin = (float) (Math.sin(rad1) * rad);
-			float cos = (float) (Math.cos(rad1) * rad);
-			bufferBuilder.vertex(matrix, (float) current[0] + sin, (float) current[1] + cos, 0.0F).color(cr, cg, cb, ca);
+
+			double[] current = map[0];
+			float sin = 0.0F;
+			float cos = (float) current[2];
+			buffer.vertex(matrix, (float) current[0] + sin, (float) current[1] + cos).color(cr, cg, cb, ca);
+		});
+	}
+
+	private static int clampRadius(double radius, int width, int height) {
+		return Math.max(0, Math.min((int) Math.round(radius), Math.min(width, height) / 2));
+	}
+
+	private static int getLeftInsetForRow(int row, int height, int radiusTop, int radiusBottom) {
+		int inset = 0;
+		if (radiusTop > 0 && row < radiusTop) {
+			inset = Math.max(inset, getCornerInset(radiusTop, row));
 		}
-		BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
+		if (radiusBottom > 0 && row >= height - radiusBottom) {
+			inset = Math.max(inset, getCornerInset(radiusBottom, height - 1 - row));
+		}
+		return inset;
+	}
+
+	private static int getRightInsetForRow(int row, int height, int radiusTop, int radiusBottom) {
+		int inset = 0;
+		if (radiusTop > 0 && row < radiusTop) {
+			inset = Math.max(inset, getCornerInset(radiusTop, row));
+		}
+		if (radiusBottom > 0 && row >= height - radiusBottom) {
+			inset = Math.max(inset, getCornerInset(radiusBottom, height - 1 - row));
+		}
+		return inset;
+	}
+
+	private static int getCornerInset(int radius, int offsetFromEdge) {
+		double distance = radius - (offsetFromEdge + 0.5D);
+		double inside = (radius * radius) - (distance * distance);
+		if (inside <= 0.0D) {
+			return radius;
+		}
+
+		return Math.max(0, (int) Math.ceil(radius - Math.sqrt(inside)));
+	}
+
+	private static void fillRow(DrawContext context, int left, int right, int y, int color) {
+		if (right <= left) {
+			return;
+		}
+
+		context.fill(left, y, right, y + 1, color);
 	}
 
 	public static void renderFilledBox(MatrixStack matrices, float f, float f2, float f3, float f4, float f5, float f6, Color color) {
-		RenderSystem.enableBlend();
-		RenderSystem.disableDepthTest();
-		RenderSystem.setShaderColor((float) color.getRed() / 255, (float) color.getGreen() / 255, (float) color.getBlue() / 255, (float) color.getAlpha() / 255);
-		RenderSystem.setShader(GameRenderer::getPositionProgram);
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder bufferBuilder = tessellator.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f2, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f2, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f2, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f2, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f5, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f5, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f5, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f2, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f5, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f2, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f2, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f2, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f5, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f5, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f5, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f2, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f5, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f2, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f2, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f2, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f2, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f2, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f2, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f5, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f5, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f, f5, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f5, f3);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f5, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f5, f6);
-		bufferBuilder.vertex(matrices.peek().getPositionMatrix(), f4, f5, f6);
-		BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-		RenderSystem.setShaderColor(1, 1, 1, 1);
-		RenderSystem.enableDepthTest();
-		RenderSystem.disableBlend();
-	}
+		float red = color.getRed() / 255F;
+		float green = color.getGreen() / 255F;
+		float blue = color.getBlue() / 255F;
+		float alpha = color.getAlpha() / 255F;
+		Matrix4f matrix = matrices.peek().getPositionMatrix();
 
-	interface RenderAction {
-		void run(BufferBuilder buffer, float x, float y, float z, float x1, float y1, float z1, float red, float green, float blue, float alpha, Matrix4f matrix);
+		drawLayer(RenderLayers.debugFilledBox(), buffer -> {
+			addQuad(buffer, matrix, f, f2, f3, f4, f2, f3, f4, f2, f6, f, f2, f6, red, green, blue, alpha);
+			addQuad(buffer, matrix, f, f5, f3, f, f5, f6, f4, f5, f6, f4, f5, f3, red, green, blue, alpha);
+			addQuad(buffer, matrix, f, f2, f3, f, f5, f3, f4, f5, f3, f4, f2, f3, red, green, blue, alpha);
+			addQuad(buffer, matrix, f, f2, f6, f4, f2, f6, f4, f5, f6, f, f5, f6, red, green, blue, alpha);
+			addQuad(buffer, matrix, f, f2, f3, f, f2, f6, f, f5, f6, f, f5, f3, red, green, blue, alpha);
+			addQuad(buffer, matrix, f4, f2, f3, f4, f5, f3, f4, f5, f6, f4, f2, f6, red, green, blue, alpha);
+		});
 	}
 
 	public static void renderLine(MatrixStack matrices, Color color, Vec3d start, Vec3d end) {
 		matrices.push();
-		Matrix4f s = matrices.peek().getPositionMatrix();
+		Matrix4f matrix = matrices.peek().getPositionMatrix();
 		if (ClickGUI.antiAliasing.getValue()) {
 			GL11.glEnable(GL13.GL_MULTISAMPLE);
 			GL11.glEnable(GL11.GL_LINE_SMOOTH);
 			GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
 		}
 		GL11.glDepthFunc(GL11.GL_ALWAYS);
-		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-		RenderSystem.defaultBlendFunc();
-		RenderSystem.enableBlend();
 
-		genericAABBRender(
-				VertexFormat.DrawMode.DEBUG_LINES,
-				VertexFormats.POSITION_COLOR,
-				GameRenderer::getPositionColorProgram,
-				s,
-				start,
-				end.subtract(start),
-				color,
-				(buffer, x, y, z, x1, y1, z1, red, green, blue, alpha, matrix) -> {
-					buffer.vertex(matrix, x, y, z).color(red, green, blue, alpha);
-					buffer.vertex(matrix, x1, y1, z1).color(red, green, blue, alpha);
-				}
-		);
+		float red = color.getRed() / 255f;
+		float green = color.getGreen() / 255f;
+		float blue = color.getBlue() / 255f;
+		float alpha = color.getAlpha() / 255f;
+
+		drawLayer(RenderLayers.lines(), buffer -> emitLine(
+				buffer,
+				matrix,
+				(float) start.x,
+				(float) start.y,
+				(float) start.z,
+				(float) end.x,
+				(float) end.y,
+				(float) end.z,
+				red,
+				green,
+				blue,
+				alpha,
+				1.0F
+		));
 
 		GL11.glDepthFunc(GL11.GL_LEQUAL);
-		RenderSystem.disableBlend();
 		if (ClickGUI.antiAliasing.getValue()) {
 			GL11.glDisable(GL11.GL_LINE_SMOOTH);
 			GL11.glDisable(GL13.GL_MULTISAMPLE);
 		}
 		matrices.pop();
-	}
-
-	private static void genericAABBRender(VertexFormat.DrawMode mode, VertexFormat format, Supplier<ShaderProgram> shader, Matrix4f stack, Vec3d start, Vec3d dimensions, Color color, RenderAction action) {
-		float red = color.getRed() / 255f;
-		float green = color.getGreen() / 255f;
-		float blue = color.getBlue() / 255f;
-		float alpha = color.getAlpha() / 255f;
-		Vec3d end = start.add(dimensions);
-		float x1 = (float) start.x;
-		float y1 = (float) start.y;
-		float z1 = (float) start.z;
-		float x2 = (float) end.x;
-		float y2 = (float) end.y;
-		float z2 = (float) end.z;
-		useBuffer(mode, format, shader, bufferBuilder -> action.run(bufferBuilder, x1, y1, z1, x2, y2, z2, red, green, blue, alpha, stack));
-	}
-
-	private static void useBuffer(VertexFormat.DrawMode mode, VertexFormat format, Supplier<ShaderProgram> shader, Consumer<BufferBuilder> runner) {
-		Tessellator t = Tessellator.getInstance();
-		BufferBuilder bb = t.begin(mode, format);
-
-		runner.accept(bb);
-
-		setup();
-		RenderSystem.setShader(shader);
-		BufferRenderer.drawWithGlobalProgram(bb.end());
-		cleanup();
 	}
 }

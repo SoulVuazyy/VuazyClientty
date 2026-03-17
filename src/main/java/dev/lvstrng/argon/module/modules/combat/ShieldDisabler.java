@@ -76,7 +76,7 @@ public final class ShieldDisabler extends Module implements TickListener, Attack
 				if (player.isHolding(Items.SHIELD) && player.isBlocking()) {
 					if (switchClock > 0) {
 						if (previousSlot == -1)
-							previousSlot = mc.player.getInventory().selectedSlot;
+							previousSlot = mc.player.getInventory().getSelectedSlot();
 
 						switchClock--;
 						return;

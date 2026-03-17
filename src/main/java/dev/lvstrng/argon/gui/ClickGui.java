@@ -6,8 +6,10 @@ import dev.lvstrng.argon.module.modules.client.ClickGUI;
 import dev.lvstrng.argon.utils.ColorUtils;
 import dev.lvstrng.argon.utils.RenderUtils;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 
 import java.awt.*;
@@ -63,7 +65,7 @@ public final class ClickGui extends Screen {
 			if (mc.currentScreen instanceof ClickGui)
 				context.fill(0, 0, mc.getWindow().getWidth(), mc.getWindow().getHeight(), currentColor.getRGB());
 
-			RenderUtils.unscaledProjection();
+			RenderUtils.unscaledProjection(context);
 			mouseX *= (int) MinecraftClient.getInstance().getWindow().getScaleFactor();
 			mouseY *= (int) MinecraftClient.getInstance().getWindow().getScaleFactor();
 			super.render(context, mouseX, mouseY, delta);
@@ -73,37 +75,50 @@ public final class ClickGui extends Screen {
 				window.updatePosition(mouseX, mouseY, delta);
 			}
 
-			RenderUtils.scaledProjection();
+			RenderUtils.scaledProjection(context);
 		}
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+	public boolean keyPressed(KeyInput keyInput) {
+		int keyCode = keyInput.key();
+		int scanCode = keyInput.scancode();
+		int modifiers = keyInput.modifiers();
+
 		for (Window window : windows)
 			window.keyPressed(keyCode, scanCode, modifiers);
 
-		return super.keyPressed(keyCode, scanCode, modifiers);
+		return super.keyPressed(keyInput);
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+	public boolean mouseClicked(Click click, boolean doubled) {
+		double mouseX = click.x();
+		double mouseY = click.y();
+		int button = click.button();
+
 		mouseX *= (int) MinecraftClient.getInstance().getWindow().getScaleFactor();
 		mouseY *= (int) MinecraftClient.getInstance().getWindow().getScaleFactor();
 
 		for (Window window : windows)
 			window.mouseClicked(mouseX, mouseY, button);
 
-		return super.mouseClicked(mouseX, mouseY, button);
+		return super.mouseClicked(click, doubled);
 	}
 
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+	public boolean mouseDragged(Click click, double deltaX, double deltaY) {
+		double mouseX = click.x();
+		double mouseY = click.y();
+		int button = click.button();
+
 		mouseX *= (int) MinecraftClient.getInstance().getWindow().getScaleFactor();
 		mouseY *= (int) MinecraftClient.getInstance().getWindow().getScaleFactor();
+
 		for (Window window : windows)
 			window.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
 
-		return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+		return super.mouseDragged(click, deltaX, deltaY);
 	}
 
 	@Override
@@ -137,13 +152,17 @@ public final class ClickGui extends Screen {
 	}
 
 	@Override
-	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+	public boolean mouseReleased(Click click) {
+		double mouseX = click.x();
+		double mouseY = click.y();
+		int button = click.button();
+
 		mouseX *= (int) MinecraftClient.getInstance().getWindow().getScaleFactor();
 		mouseY *= (int) MinecraftClient.getInstance().getWindow().getScaleFactor();
 
 		for (Window window : windows)
 			window.mouseReleased(mouseX, mouseY, button);
 
-		return super.mouseReleased(mouseX, mouseY, button);
+		return super.mouseReleased(click);
 	}
 }

@@ -128,7 +128,7 @@ public final class AutoCrystal extends Module implements TickListener, ItemUseLi
 						if (fakePunch.getValue()) {
 							if (randomInt <= particleChance.getValue())
 								if (CrystalUtils.canPlaceCrystalClientAssumeObsidian(hit.getBlockPos()) && hit.getSide() == Direction.UP)
-									mc.particleManager.addBlockBreakingParticles(hit.getBlockPos(), hit.getSide());
+									mc.player.swingHand(Hand.MAIN_HAND);
 						}
 
 						placeClock = placeDelay.getValueInt();
@@ -150,7 +150,6 @@ public final class AutoCrystal extends Module implements TickListener, ItemUseLi
 
 						mc.interactionManager.attackBlock(hit.getBlockPos(), hit.getSide());
 						mc.player.swingHand(Hand.MAIN_HAND);
-						mc.particleManager.addBlockBreakingParticles(hit.getBlockPos(), hit.getSide());
 						mc.interactionManager.updateBlockBreakingProgress(hit.getBlockPos(), hit.getSide());
 
 						breakClock = breakDelay.getValueInt();
@@ -172,7 +171,6 @@ public final class AutoCrystal extends Module implements TickListener, ItemUseLi
 						if (clickSimulation.getValue())
 							MouseSimulation.mouseClick(GLFW.GLFW_MOUSE_BUTTON_LEFT);
 
-						mc.player.resetLastAttackedTicks();
 						mc.player.swingHand(Hand.MAIN_HAND);
 
 						breakClock = breakDelay.getValueInt();
@@ -195,7 +193,7 @@ public final class AutoCrystal extends Module implements TickListener, ItemUseLi
 				if (!fakePunch.getValue() && !(entity instanceof EndCrystalEntity || entity instanceof SlimeEntity))
 					return;
 
-				int previousSlot = mc.player.getInventory().selectedSlot;
+				int previousSlot = mc.player.getInventory().getSelectedSlot();
 
 				if(entity instanceof EndCrystalEntity || entity instanceof SlimeEntity)
 					if(antiWeakness.getValue() && cantBreakCrystal())

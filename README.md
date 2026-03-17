@@ -18,6 +18,12 @@ This version of the client has auth removed COMPLETELY, so don't worry, the clie
 
 NOTE: Some of the stuff here is pasted by ablue lmaooo (Not damage utils, I was lazy to make damage utils for 1.21 so i just pasted from meteor client)
 
+## Why I updated this
+
+Even though I did not want this to be leaked, It got leaked either way, I don't care anymore, It looked like some of you guys needed an updated version to 1.21.11, so I did It!, just a note, I have not tried any of the modules out after the update, If you find any issues, please open an issue or a PR!
+
+# IMPORTANT!!!!!! READ THE LICENSE, READ THE LICENSE, READ THE LICENSE.
+
 ## How to build
 
 - Launch the project in IntelliJ

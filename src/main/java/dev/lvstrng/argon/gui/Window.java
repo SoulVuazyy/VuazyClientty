@@ -59,7 +59,7 @@ public final class Window {
 		if (currentColor.getAlpha() != toAlpha)
 			currentColor = ColorUtils.smoothAlphaTransition(0.05F, toAlpha, currentColor);
 
-		RenderUtils.renderRoundedQuad(context.getMatrices(), currentColor, prevX, prevY, prevX + width, prevY + height, ClickGUI.roundQuads.getValueInt(), ClickGUI.roundQuads.getValueInt(), 0, 0, 50);
+		RenderUtils.renderRoundedQuad(context, currentColor, prevX, prevY, prevX + width, prevY + height, ClickGUI.roundQuads.getValueInt(), ClickGUI.roundQuads.getValueInt(), 0, 0, 50);
 		context.fill(prevX, prevY + (height - 2), prevX + width, prevY + height, Utils.getMainColor(255, moduleButtons.indexOf(moduleButtons.get(0))).getRGB());
 
 		int charOffset = (prevX + (width / 2));

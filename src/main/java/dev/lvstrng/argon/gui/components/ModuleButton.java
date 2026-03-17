@@ -1,6 +1,5 @@
 package dev.lvstrng.argon.gui.components;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.lvstrng.argon.Argon;
 import dev.lvstrng.argon.gui.Window;
 import dev.lvstrng.argon.gui.components.settings.*;
@@ -78,8 +77,8 @@ public final class ModuleButton {
 			context.fill(parent.getX(), parent.getY() + offset, parent.getX() + parent.getWidth(), parent.getY() + parent.getHeight() + offset, currentColor.getRGB());
 			context.fillGradient(parent.getX(), parent.getY() + offset, parent.getX() + 2, parent.getY() + parent.getHeight() + offset, Utils.getMainColor(255, Argon.INSTANCE.getModuleManager().getModulesInCategory(module.getCategory()).indexOf(module)).getRGB(), Utils.getMainColor(255, Argon.INSTANCE.getModuleManager().getModulesInCategory(module.getCategory()).indexOf(module) + 1).getRGB());
 		} else {
-			RenderUtils.renderRoundedQuad(context.getMatrices(), currentColor, parent.getX(), parent.getY() + offset, parent.getX() + parent.getWidth(), parent.getY() + parent.getHeight() + offset, 0, 0, 3, animation.getValue() > 30 ? 0 : ClickGUI.roundQuads.getValueInt(), 50);
-			RenderUtils.renderRoundedQuad(context.getMatrices(), Utils.getMainColor(255, Argon.INSTANCE.getModuleManager().getModulesInCategory(module.getCategory()).indexOf(module)), parent.getX(), parent.getY() + offset, parent.getX() + 2, parent.getY() + (parent.getHeight() - 1) + offset, 0, 0, extended ? 0 : 2, 0, 50);
+			RenderUtils.renderRoundedQuad(context, currentColor, parent.getX(), parent.getY() + offset, parent.getX() + parent.getWidth(), parent.getY() + parent.getHeight() + offset, 0, 0, 3, animation.getValue() > 30 ? 0 : ClickGUI.roundQuads.getValueInt(), 50);
+			RenderUtils.renderRoundedQuad(context, Utils.getMainColor(255, Argon.INSTANCE.getModuleManager().getModulesInCategory(module.getCategory()).indexOf(module)), parent.getX(), parent.getY() + offset, parent.getX() + 2, parent.getY() + (parent.getHeight() - 1) + offset, 0, 0, extended ? 0 : 2, 0, 50);
 		}
 
 		CharSequence nameChars = module.getName();
@@ -106,7 +105,7 @@ public final class ModuleButton {
 			int textCenter = parentCenter - tw / 2;
 
 			RenderUtils.renderRoundedQuad(
-					context.getMatrices(),
+					context,
 					new Color(100, 100, 100, 100),
 					textCenter - 5,
 					((double) mc.getWindow().getFramebufferHeight() / 2) + 294,
@@ -136,12 +135,12 @@ public final class ModuleButton {
 	}
 
 	private void renderSettings(DrawContext context, int mouseX, int mouseY, float delta) {
-		int scissorX = parent.getX();
-		int scissorY = (int) (mc.getWindow().getHeight() - (parent.getY() + offset + animation.getValue()));
-		int scissorWidth = parent.getWidth();
-		int scissorHeight = (int) animation.getValue();
+		int scissorX1 = parent.getX();
+		int scissorY1 = parent.getY() + offset;
+		int scissorX2 = scissorX1 + parent.getWidth();
+		int scissorY2 = scissorY1 + (int) animation.getValue();
 
-		RenderSystem.enableScissor(scissorX, scissorY, scissorWidth, scissorHeight);
+		context.enableScissor(scissorX1, scissorY1, scissorX2, scissorY2);
 
 		for (RenderableSetting renderableSetting : settings)
 			if(animation.getValue() > parent.getHeight())
@@ -150,20 +149,20 @@ public final class ModuleButton {
 		for (RenderableSetting renderableSetting : settings) {
 			if(animation.getValue() > parent.getHeight()) {
 				if (renderableSetting instanceof Slider slider) {
-					RenderUtils.renderCircle(context.getMatrices(), new Color(0, 0, 0, 170), (slider.parentX() + (Math.max(slider.lerpedOffsetX, 2.5))), slider.parentY() + slider.offset + slider.parentOffset() + 27.5, 6, 15);
-					RenderUtils.renderCircle(context.getMatrices(), slider.currentColor1.brighter(), (slider.parentX() + (Math.max(slider.lerpedOffsetX, 2.5))) , slider.parentY() + slider.offset + slider.parentOffset() + 27.5, 5, 15);
+					RenderUtils.renderCircle(context, new Color(0, 0, 0, 170), (slider.parentX() + (Math.max(slider.lerpedOffsetX, 2.5))), slider.parentY() + slider.offset + slider.parentOffset() + 27.5, 6, 15);
+					RenderUtils.renderCircle(context, slider.currentColor1.brighter(), (slider.parentX() + (Math.max(slider.lerpedOffsetX, 2.5))) , slider.parentY() + slider.offset + slider.parentOffset() + 27.5, 5, 15);
 
 				} else if (renderableSetting instanceof MinMaxSlider slider) {
-					RenderUtils.renderCircle(context.getMatrices(), new Color(0, 0, 0, 170), (slider.parentX() + (Math.max(slider.lerpedOffsetMinX, 2.5))), slider.parentY() + slider.offset + slider.parentOffset() + 27.5, 6, 15);
-					RenderUtils.renderCircle(context.getMatrices(), slider.currentColor1.brighter(), (slider.parentX() + (Math.max(slider.lerpedOffsetMinX, 2.5))), slider.parentY() + slider.offset + slider.parentOffset() + 27.5, 5, 15);
+					RenderUtils.renderCircle(context, new Color(0, 0, 0, 170), (slider.parentX() + (Math.max(slider.lerpedOffsetMinX, 2.5))), slider.parentY() + slider.offset + slider.parentOffset() + 27.5, 6, 15);
+					RenderUtils.renderCircle(context, slider.currentColor1.brighter(), (slider.parentX() + (Math.max(slider.lerpedOffsetMinX, 2.5))), slider.parentY() + slider.offset + slider.parentOffset() + 27.5, 5, 15);
 
-					RenderUtils.renderCircle(context.getMatrices(), new Color(0, 0, 0, 170), (slider.parentX() + (Math.max(slider.lerpedOffsetMaxX, 2.5))), slider.parentY() + slider.offset + slider.parentOffset() + 27.5, 6, 15);
-					RenderUtils.renderCircle(context.getMatrices(), slider.currentColor1.brighter(), (slider.parentX() + (Math.max(slider.lerpedOffsetMaxX, 2.5))), slider.parentY() + slider.offset + slider.parentOffset() + 27.5, 5, 15);
+					RenderUtils.renderCircle(context, new Color(0, 0, 0, 170), (slider.parentX() + (Math.max(slider.lerpedOffsetMaxX, 2.5))), slider.parentY() + slider.offset + slider.parentOffset() + 27.5, 6, 15);
+					RenderUtils.renderCircle(context, slider.currentColor1.brighter(), (slider.parentX() + (Math.max(slider.lerpedOffsetMaxX, 2.5))), slider.parentY() + slider.offset + slider.parentOffset() + 27.5, 5, 15);
 				}
 			}
 		}
 
-		RenderSystem.disableScissor();
+		context.disableScissor();
 	}
 
 	public void onExtend() {

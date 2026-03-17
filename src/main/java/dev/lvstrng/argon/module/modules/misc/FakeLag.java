@@ -11,6 +11,7 @@ import dev.lvstrng.argon.module.setting.MinMaxSetting;
 import dev.lvstrng.argon.module.setting.NumberSetting;
 import dev.lvstrng.argon.utils.EncryptedString;
 import dev.lvstrng.argon.utils.TimerUtils;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
@@ -48,7 +49,7 @@ public final class FakeLag extends Module implements PlayerTickListener, PacketR
 
 		timerUtil.reset();
 		if (mc.player != null)
-			pos = mc.player.getPos();
+			pos = mc.player.getEntityPos();
 
 		delay = lagDelay.getRandomValueInt();
 		super.onEnable();
@@ -86,7 +87,7 @@ public final class FakeLag extends Module implements PlayerTickListener, PacketR
 			return;
 		}
 
-		if (cancelOnElytra.getValue() && mc.player.getInventory().getArmorStack(2).getItem() == Items.ELYTRA) {
+		if (cancelOnElytra.getValue() && mc.player.getEquippedStack(EquipmentSlot.CHEST).getItem() == Items.ELYTRA) {
 			reset();
 			return;
 		}
@@ -121,6 +122,6 @@ public final class FakeLag extends Module implements PlayerTickListener, PacketR
 
 		bool = false;
 		timerUtil.reset();
-		pos = mc.player.getPos();
+		pos = mc.player.getEntityPos();
 	}
 }

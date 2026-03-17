@@ -11,7 +11,6 @@ import dev.lvstrng.argon.utils.RenderUtils;
 import dev.lvstrng.argon.utils.WorldUtils;
 import net.minecraft.block.entity.*;
 import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -82,7 +81,7 @@ public final class StorageEsp extends Module implements GameRenderListener, Pack
 		if (cam != null) {
 			MatrixStack matrices = event.matrices;
 			matrices.push();
-			Vec3d vec = cam.getPos();
+			Vec3d vec = cam.getCameraPos();
 			matrices.translate(-vec.x, -vec.y, -vec.z);
 		}
 

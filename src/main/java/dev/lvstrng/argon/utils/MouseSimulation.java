@@ -1,7 +1,7 @@
 package dev.lvstrng.argon.utils;
 
-import dev.lvstrng.argon.mixin.MinecraftClientAccessor;
-import dev.lvstrng.argon.mixin.MouseHandlerAccessor;
+import dev.lvstrng.argon.event.EventManager;
+import dev.lvstrng.argon.event.events.ButtonListener;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.HashMap;
@@ -15,10 +15,6 @@ public final class MouseSimulation {
 	public static HashMap<Integer, Boolean> mouseButtons = new HashMap<>();
 	public static ExecutorService clickExecutor = Executors.newFixedThreadPool(100);
 
-	public static MouseHandlerAccessor getMouseHandler() {
-		return (MouseHandlerAccessor) ((MinecraftClientAccessor) mc).getMouse();
-	}
-
 	public static boolean isMouseButtonPressed(int keyCode) {
 		Boolean key = mouseButtons.get(keyCode);
 		return key != null ? key : false;
@@ -26,11 +22,12 @@ public final class MouseSimulation {
 
 	public static void mousePress(int keyCode) {
 		mouseButtons.put(keyCode, true);
-		getMouseHandler().press(mc.getWindow().getHandle(), keyCode, GLFW.GLFW_PRESS, 0);
+		EventManager.fire(new ButtonListener.ButtonEvent(keyCode, mc.getWindow().getHandle(), GLFW.GLFW_PRESS));
 	}
 
 	public static void mouseRelease(int keyCode) {
-		getMouseHandler().press(mc.getWindow().getHandle(), keyCode, GLFW.GLFW_RELEASE, 0);
+		mouseButtons.put(keyCode, false);
+		EventManager.fire(new ButtonListener.ButtonEvent(keyCode, mc.getWindow().getHandle(), GLFW.GLFW_RELEASE));
 	}
 
 	public static void mouseClick(int keyCode, int millis) {

@@ -9,6 +9,8 @@ import dev.lvstrng.argon.utils.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
@@ -51,7 +53,7 @@ public final class StringBox extends RenderableSetting {
 
                 @Override
                 public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-                    RenderUtils.unscaledProjection();
+                    RenderUtils.unscaledProjection(context);
                     mouseX *= (int) MinecraftClient.getInstance().getWindow().getScaleFactor();
                     mouseY *= (int) MinecraftClient.getInstance().getWindow().getScaleFactor();
                     super.render(context, mouseX, mouseY, delta);
@@ -67,7 +69,7 @@ public final class StringBox extends RenderableSetting {
                     int startX = screenMidX - (width / 2);
                     int startY = screenMidY - 30;
 
-                    RenderUtils.renderRoundedQuad(context.getMatrices(), new Color(0, 0, 0, ClickGUI.alphaWindow.getValueInt()), startX, startY, startX + width, screenMidY + 30, 5, 5, 0, 0, 20);
+                    RenderUtils.renderRoundedQuad(context, new Color(0, 0, 0, ClickGUI.alphaWindow.getValueInt()), startX, startY, startX + width, screenMidY + 30, 5, 5, 0, 0, 20);
                     TextRenderer.drawCenteredString(setting.getName(), context, screenMidX, startY + 10, new Color(245, 245, 245, 255).getRGB());
                     context.fill(startX, screenMidY, startX + width, screenMidY + 30, new Color(0, 0, 0, 120).getRGB());
 
@@ -76,43 +78,64 @@ public final class StringBox extends RenderableSetting {
                     TextRenderer.drawString(content, context, startX + 15, screenMidY + 8, new Color(245, 245, 245, 255).getRGB());
                     context.fill(startX, screenMidY, startX + width, screenMidY + 1, Utils.getMainColor(255, 1).getRGB());
 
-                    RenderUtils.scaledProjection();
+                    RenderUtils.scaledProjection(context);
                 }
 
                 @Override
-                public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+                public boolean keyPressed(KeyInput keyInput) {
+                    int keyCode = keyInput.key();
+                    int modifiers = keyInput.modifiers();
+
                     if(keyCode == GLFW.GLFW_KEY_ESCAPE) {
                         setting.setValue(content.strip());
                         mc.setScreen(Argon.INSTANCE.clickGui);
+                        return true;
                     }
 
-                    if(isPaste(keyCode))
+                    if(isPasteShortcut(keyInput)) {
                         content += mc.keyboard.getClipboard();
+                        return true;
+                    }
 
-                    if(isCopy(keyCode))
-                        GLFW.glfwSetClipboardString(mc.getWindow().getHandle(), content);
+                    if(isCopyShortcut(keyInput)) {
+                        mc.keyboard.setClipboard(content);
+                        return true;
+                    }
 
                     if(keyCode == GLFW.GLFW_KEY_BACKSPACE) {
                         if(!content.isEmpty()) {
                             content = content.substring(0, content.length() - 1);
                         }
+                        return true;
                     }
 
-                    return super.keyPressed(keyCode, scanCode, modifiers);
+                    return super.keyPressed(keyInput);
                 }
 
                 public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
                 }
 
                 @Override
-                public boolean charTyped(char chr, int modifiers) {
-                    content += chr;
-                    return super.charTyped(chr, modifiers);
+                public boolean charTyped(CharInput charInput) {
+                    if (!charInput.isValidChar()) {
+                        return super.charTyped(charInput);
+                    }
+
+                    content += charInput.asString();
+                    return true;
                 }
 
                 @Override
                 public boolean shouldCloseOnEsc() {
                     return false;
+                }
+
+                private boolean isCopyShortcut(KeyInput keyInput) {
+                    return keyInput.key() == GLFW.GLFW_KEY_C && (keyInput.modifiers() & GLFW.GLFW_MOD_CONTROL) != 0;
+                }
+
+                private boolean isPasteShortcut(KeyInput keyInput) {
+                    return keyInput.key() == GLFW.GLFW_KEY_V && (keyInput.modifiers() & GLFW.GLFW_MOD_CONTROL) != 0;
                 }
             });
         }

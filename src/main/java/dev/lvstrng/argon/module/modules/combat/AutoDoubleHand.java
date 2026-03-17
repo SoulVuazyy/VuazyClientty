@@ -91,12 +91,12 @@ public final class AutoDoubleHand extends Module implements HudListener {
 		if (checkShield.getValue() && mc.player.isBlocking())
 			return;
 
-		if (inventory.offHand.get(0).getItem() != Items.TOTEM_OF_UNDYING && onPop.getValue() && !offhandHasNoTotem) {
+		if (mc.player.getOffHandStack().getItem() != Items.TOTEM_OF_UNDYING && onPop.getValue() && !offhandHasNoTotem) {
 			offhandHasNoTotem = true;
 			InventoryUtils.selectItemFromHotbar(Items.TOTEM_OF_UNDYING);
 		}
 
-		if (inventory.offHand.get(0).getItem() == Items.TOTEM_OF_UNDYING)
+		if (mc.player.getOffHandStack().getItem() == Items.TOTEM_OF_UNDYING)
 			offhandHasNoTotem = false;
 
 		if (mc.player.getHealth() <= health.getValue() && onHealth.getValue() && !belowHealth) {
@@ -125,14 +125,14 @@ public final class AutoDoubleHand extends Module implements HudListener {
 				return;
 		}
 
-		Vec3d playerPos = mc.player.getPos();
+		Vec3d playerPos = mc.player.getEntityPos();
 		BlockPos playerBlockPos = new BlockPos((int) playerPos.x, (int) playerPos.y - (int) above, (int) playerPos.z);
 		if (!mc.world.getBlockState(new BlockPos(playerBlockPos)).isAir())
 			return;
 
 		List<EndCrystalEntity> crystals = nearbyCrystals();
 		ArrayList<Vec3d> pos = new ArrayList<>();
-		crystals.forEach(e -> pos.add(e.getPos()));
+		crystals.forEach(e -> pos.add(e.getEntityPos()));
 		if (predictCrystals.getValue()) {
 			Stream<BlockPos> s = BlockUtils.getAllInBoxStream(mc.player.getBlockPos().add(-6, -8, -6), mc.player.getBlockPos().add(6, 2, 6))
 					.filter(e -> mc.world.getBlockState(e).getBlock() == Blocks.OBSIDIAN || mc.world.getBlockState(e).getBlock() == Blocks.BEDROCK)
@@ -158,7 +158,7 @@ public final class AutoDoubleHand extends Module implements HudListener {
 	}
 
 	private List<EndCrystalEntity> nearbyCrystals() {
-		Vec3d pos = mc.player.getPos();
+		Vec3d pos = mc.player.getEntityPos();
 		return mc.world.getEntitiesByClass(EndCrystalEntity.class, new Box(pos.add(-6.0, -6.0, -6.0), pos.add(6.0, 6.0, 6.0)), e -> true);
 	}
 

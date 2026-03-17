@@ -1,5 +1,6 @@
 package dev.lvstrng.argon.utils;
 
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.screen.slot.Slot;
@@ -15,7 +16,7 @@ public class FakeInvScreen extends InventoryScreen {
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+	public boolean mouseClicked(Click click, boolean doubleClick) {
 		return false;
 	}
 }

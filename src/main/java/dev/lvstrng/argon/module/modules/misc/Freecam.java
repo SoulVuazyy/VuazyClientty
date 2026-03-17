@@ -7,9 +7,7 @@ import dev.lvstrng.argon.module.Category;
 import dev.lvstrng.argon.module.Module;
 import dev.lvstrng.argon.module.setting.NumberSetting;
 import dev.lvstrng.argon.utils.EncryptedString;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
@@ -70,8 +68,7 @@ public final class Freecam extends Module implements TickListener, CameraUpdateL
 
 		float f = (float) Math.PI / 180;
 		float f2 = (float) Math.PI;
-		ClientPlayerEntity clientPlayerEntity = mc.player;
-		Vec3d vec3d = new Vec3d(-MathHelper.sin(-mc.player.getYaw() * f - f2), 0.0, -MathHelper.cos(-clientPlayerEntity.getYaw() * f - f2));
+		Vec3d vec3d = new Vec3d(-MathHelper.sin(-mc.player.getYaw() * f - f2), 0.0, -MathHelper.cos(-mc.player.getYaw() * f - f2));
 		Vec3d vec3d2 = new Vec3d(0.0, 1.0, 0.0);
 		Vec3d vec3d3 = vec3d2.crossProduct(vec3d);
 		Vec3d vec3d4 = vec3d.crossProduct(vec3d2);
@@ -116,7 +113,7 @@ public final class Freecam extends Module implements TickListener, CameraUpdateL
 
 	@Override
 	public void onCameraUpdate(CameraUpdateEvent event) {
-		float tickDelta = RenderTickCounter.ONE.getTickDelta(true);
+		float tickDelta = mc.getRenderTickCounter().getTickProgress(true);
 
 		if (mc.currentScreen != null)
 			return;

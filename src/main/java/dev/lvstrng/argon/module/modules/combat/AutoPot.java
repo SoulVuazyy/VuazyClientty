@@ -70,7 +70,7 @@ public final class AutoPot extends Module implements TickListener {
 					return;
 				}
 
-				if (goToPrevSlot.getValue() && prevSlot == -1) prevSlot = mc.player.getInventory().selectedSlot;
+				if (goToPrevSlot.getValue() && prevSlot == -1) prevSlot = mc.player.getInventory().getSelectedSlot();
 				if (lookDown.getValue() && prevPitch == -1) prevPitch = mc.player.getPitch();
 
 				int potSlot = InventoryUtils.findSplash(StatusEffects.INSTANT_HEALTH.value(), 1, 1);
@@ -92,7 +92,7 @@ public final class AutoPot extends Module implements TickListener {
 					mc.player.setPitch(90F);
 
 				ActionResult actionResult = mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
-				if (actionResult.shouldSwingHand())
+				if (actionResult.isAccepted())
 					mc.player.swingHand(Hand.MAIN_HAND);
 
 				throwClock = 0;

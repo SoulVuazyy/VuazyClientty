@@ -15,11 +15,11 @@ import static dev.lvstrng.argon.Argon.mc;
 public final class RotationUtils {
 
 	public static Vec3d getEyesPos(PlayerEntity player) {
-		return RenderUtils.getCameraPos();
+		return player.getCameraPosVec(RenderUtils.tickProgress());
 	}
 
 	public static BlockPos getCameraBlockPos() {
-		return mc.getBlockEntityRenderDispatcher().camera.getBlockPos();
+		return mc.gameRenderer.getCamera().getBlockPos();
 	}
 
 	public static BlockPos getEyesBlockPos() {
