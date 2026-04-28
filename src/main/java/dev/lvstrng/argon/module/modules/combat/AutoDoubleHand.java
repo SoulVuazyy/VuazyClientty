@@ -54,11 +54,11 @@ public final class AutoDoubleHand extends Module implements HudListener {
 	private boolean belowHealth;
 	private boolean offhandHasNoTotem;
 
-	public VuazyDh4nd() {
-		super(EncryptedString.of("4uto Vuazy H4nd"),
+	public Vuazyhand() {
+		super(EncryptedString.of("Auto Vuazy Hand"),
 				-1,
 				Category.COMBAT);
-		addSettings(st0pOnCrysss, checkSh1eld, 0nPop, 0nHealth, pr3d1ct, he4lth, 0nGround, ch3ckPl4yers, d1stance, pr3dictCryssss, ch3ck4im, ch3ck1tems, act1vates4bove);
+		addSettings(stopOnCrystal, checkShield, onPop, onHealth, pred1ct, health, onGround, checkPlayers, distance, predictCrystal, checkaim, checkitems, activatesabove);
 		belowHealth = false;
 		offhandHasNoTotem = false;
 	}
