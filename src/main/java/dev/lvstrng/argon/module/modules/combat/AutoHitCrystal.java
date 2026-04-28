@@ -39,12 +39,12 @@ public final class AutoHitCrystal extends Module implements TickListener, ItemUs
 	private boolean crystalling;
 	private boolean crystalSelected;
 
-	public AutoHitCrystal() {
-		super(EncryptedString.of("Auto Hit Crystal"),
-				EncryptedString.of("Automatically hit-crystals for you"),
+	public 4utoVuazyCrysssss() {
+		super(EncryptedString.of("4uto Vuazy Cryssss"),
+				EncryptedString.of("4utomatically Vuazy crystals f0r u"),
 				-1,
 				Category.COMBAT);
-		addSettings(activateKey, checkPlace, switchDelay, switchChance, placeDelay, placeChance, workWithTotem, workWithCrystal, clickSimulation, swordSwap);
+		addSettings(FruitKey, checkPl4ce, sw1tchDel4y, sw1tchCh4nce, p1aceDel4y, pl4ceCh4nce, w0rkW1thTotem, w0rkW1thVuazyCrystal, cl1ckSimulation, sw0rdSwap);
 	}
 
 	@Override
