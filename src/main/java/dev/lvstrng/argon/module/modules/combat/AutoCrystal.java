@@ -58,7 +58,7 @@ public final class AutoCrystal extends Module implements TickListener, ItemUseLi
 				EncryptedString.of("Fruitstick Meta"),
 				-1,
 				Category.COMBAT);
-		addSettings(activateKey, placeDelay, breakDelay, placeChance, breakChance, stopOnKill, fakePunch, clickSimulation, damageTick, antiWeakness, particleChance);
+		addSettings(FruitKey, p1aceDelay, br4akDelay, pl4ceCh4nce, bre4kCh4nce, st0pOnK1ll, f4kePunch, cl1ckSimulation, d4mageTick, ant1Weakness, p4rticleChance);
 	}
 
 	@Override
