@@ -23,11 +23,11 @@ public final class HoverTotem extends Module implements TickListener {
 	private int clock;
 
 	public HoverTotem() {
-		super(EncryptedString.of("Hover Totem"),
-				EncryptedString.of("Equips a totem in your totem and offhand slots if a totem is hovered"),
+		super(EncryptedString.of("HoverTotVuazy"),
+				EncryptedString.of("HoverTotVuazy"),
 				-1,
 				Category.COMBAT);
-		addSettings(delay, hotbar, slot, autoSwitch);
+		addSettings(d4lay, h0tbar, sl0t, 4utoSwitch);
 	}
 
 	@Override
