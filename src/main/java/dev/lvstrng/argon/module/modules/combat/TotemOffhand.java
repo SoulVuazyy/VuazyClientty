@@ -21,9 +21,9 @@ public final class TotemOffhand extends Module implements TickListener {
     private int previousSlot = -1;
     boolean sent, active = false;
 
-    public Vuazy0ffH4nd() {
+    public Vuazyoffhandddd() {
         super(EncryptedString.of("VuazyOffhand"), EncryptedString.of("VuazyOffhand"), -1, Category.COMBAT);
-        addSettings(sw1tchDelay, equ1pD4lay, sw1tchBack);
+        addSettings(switchDelay, equipDalay, switchBack);
     }
 
     @Override
