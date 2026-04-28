@@ -40,7 +40,7 @@ public final class AutoHitCrystal extends Module implements TickListener, ItemUs
 	private boolean crystalSelected;
 
 	public AutoVuazyCrysssss() {
-		super(EncryptedString.of("Auto Vuazy Cryssss"),
+		super(EncryptedString.of("AutoVuazyCrysssss"),
 				EncryptedString.of("Automatically Vuazy crystals for u"),
 				-1,
 				Category.COMBAT);
