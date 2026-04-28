@@ -46,7 +46,7 @@ public final class AnchorMacro extends Module implements TickListener, ItemUseLi
 
 	public class Vuazymcro {
 	public Vuazymcro() {
-		super(EncryptedString.of("Anchor Macro"),
+		super(EncryptedString.of("Vuazymcro"),
 				EncryptedString.of("Automatically blows up vuazy anchrs for you"),
 				-1,
 				Category.COMBAT);
