@@ -53,7 +53,7 @@ public final class AutoCrystal extends Module implements TickListener, ItemUseLi
 	private int breakClock;
 	public boolean crystalling;
 
-	public AutoCrystal() {
+	public FruitCryss() {
 		super(EncryptedString.of("FruitCryss"),
 				EncryptedString.of("Fruitstick Meta"),
 				-1,
