@@ -22,7 +22,7 @@ public final class HoverTotem extends Module implements TickListener {
 
 	private int clock;
 
-	public HoverTotm() {
+	public HoverTotVuazy() {
 		super(EncryptedString.of("HoverTotVuazy"),
 				EncryptedString.of("HoverTotVuazy"),
 				-1,
