@@ -21,9 +21,9 @@ public final class TotemOffhand extends Module implements TickListener {
     private int previousSlot = -1;
     boolean sent, active = false;
 
-    public TotemOffhand() {
-        super(EncryptedString.of("Totem Offhand"), EncryptedString.of("Switches to your totem slot and offhands a totem if you dont have one already"), -1, Category.COMBAT);
-        addSettings(switchDelay, equipDelay, switchBack);
+    public Vuazy0ffH4nd() {
+        super(EncryptedString.of("VuazyOffhand"), EncryptedString.of("VuazyOffhand"), -1, Category.COMBAT);
+        addSettings(sw1tchDelay, equ1pD4lay, sw1tchBack);
     }
 
     @Override
