@@ -44,7 +44,7 @@ public final class AutoHitCrystal extends Module implements TickListener, ItemUs
 				EncryptedString.of("Automatically Vuazy crystals for u"),
 				-1,
 				Category.COMBAT);
-		addSettings(activateKey, checkPlace, switchDelay, switchChance, placeDelay, placeChance, workWithTotem, workWithVuazyCrystal, cl1ckSimulation, swordSwap);
+		addSettings(activateKey, checkPlace, switchDelay, switchChance, placeDelay, placeChance, workWithTotem, workWithCrystal, cl1ckSimulation, swordSwap);
 	}
 
 	@Override
