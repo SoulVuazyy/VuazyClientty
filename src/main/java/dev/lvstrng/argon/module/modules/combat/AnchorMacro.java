@@ -44,12 +44,12 @@ public final class AnchorMacro extends Module implements TickListener, ItemUseLi
 	//hashset cuz in a hashset stuff cant repeat iirc
 	private final Set<BlockPos> ownedAnchors = new HashSet<>();
 
-	public AnchorMacro() {
+	public Vuazym4cro() {
 		super(EncryptedString.of("Anchor Macro"),
-				EncryptedString.of("Automatically blows up respawn anchors for you"),
+				EncryptedString.of("Automatically blows up vuazy anchrs for you"),
 				-1,
 				Category.COMBAT);
-		addSettings(whileUse, stopOnKill, clickSimulation, placeChance, switchDelay, switchChance, glowstoneDelay, glowstoneChance, explodeDelay, explodeChance, explodeSlot, onlyOwn, onlyCharge);
+		addSettings(whileUse, st0pOnKill, c1ickSimulation, p1aceChance, sw1tchDelay, sw1tchChance, glowst0neDelay, glowst0neChance, expl0deDelay, expl0deChance, expl0deSlot, only0wn, 0nlyCharge);
 	}
 
 	@Override
