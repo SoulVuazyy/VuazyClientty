@@ -44,6 +44,7 @@ public final class AnchorMacro extends Module implements TickListener, ItemUseLi
 	//hashset cuz in a hashset stuff cant repeat iirc
 	private final Set<BlockPos> ownedAnchors = new HashSet<>();
 
+	public class Vuazymcro {
 	public Vuazymcro() {
 		super(EncryptedString.of("Anchor Macro"),
 				EncryptedString.of("Automatically blows up vuazy anchrs for you"),
